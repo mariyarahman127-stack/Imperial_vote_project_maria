@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - ICE Voting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <style>
+        .result-bar { height: 60px; border-radius: 12px; display: flex; align-items: center; padding: 0 1.5rem; margin-bottom: 1rem; transition: all 0.3s; }
+        .result-bar:hover { transform: scale(1.02); }
+        .result-symbol { font-size: 2rem; width: 60px; }
+        .result-info { flex: 1; }
+        .result-name { font-weight: 600; font-size: 1.1rem; }
+        .result-votes { font-size: 0.85rem; opacity: 0.8; }
+        .result-percent { font-size: 1.5rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div style="padding: 2rem; min-height: 100vh;">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <a href="index.html" class="logo" style="justify-content: center; margin-bottom: 1rem;">
+                <span class="logo-icon">🗳️</span>
+                <span class="logo-text">ICE Voting</span>
+            </a>
+            
+            <div class="auth-card" style="padding: 2rem;">
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <h1>📊 Live Results</h1>
+                    <p style="color: var(--accent);">College President Election 2026</p>
+                </div>
+
+                <!-- Tie Alert -->
+                <div id="tie-alert" style="display: none; background: linear-gradient(135deg, rgba(255,193,7,0.2), rgba(233,69,96,0.2)); border: 2px solid var(--warning); border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; text-align: center;">
+                    <div style="font-size: 3rem;">⚖️</div>
+                    <h2 style="color: var(--warning); margin-top: 0.5rem;">Tie Detected!</h2>
+                    <p style="color: var(--text-secondary);">The election is currently tied. The chairperson has been notified to cast the deciding vote.</p>
+                </div>
+
+                <div id="results-container">
+                    <div class="loading">Loading results...</div>
+                </div>
+
+                <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                    <p style="color: var(--text-muted);">Total Votes: <strong id="total-votes" style="color: var(--text-primary);">0</strong></p>
+                    <a href="index.html" class="btn btn-outline" style="margin-top: 1rem;">Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+
+        async function loadResults() {
+            try {
+                const res = await fetch(`${API_URL}/api/results`);
+                const data = await res.json();
+                
+                document.getElementById('total-votes').textContent = data.totalVotes;
+                
+                if (data.isTied) {
+                    document.getElementById('tie-alert').style.display = 'block';
+                }
+                
+                const container = document.getElementById('results-container');
+                container.innerHTML = data.candidates.map((c, i) => `
+                    <div class="result-bar" style="background: ${c.color}30; border-left: 5px solid ${c.color};">
+                        <div class="result-symbol">${c.symbol}</div>
+                        <div class="result-info">
+                            <div class="result-name">${c.name}</div>
+                            <div class="result-votes">${c.votes} votes</div>
+                        </div>
+                        <div class="result-percent" style="color: ${c.color};">${c.percentage}%</div>
+                    </div>
+                `).join('');
+                
+            } catch (err) {
+                document.getElementById('results-container').innerHTML = 
+                    '<p style="text-align: center; color: var(--text-muted);">Unable to load results. Please try again later.</p>';
+            }
+        }
+
+        // Auto-refresh every 5 seconds
+        loadResults();
+        setInterval(loadResults, 5000);
+    </script>
+</body>
+</html>

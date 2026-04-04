@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Vote - UniVote</title>
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <meta id="redirect-meta" http-equiv="refresh" content="999;url=">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-service.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition); }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            animation: fadeInUp 3s ease-in-out infinite;
+        }
+
+        .header h1 span {
+            color: var(--primary);
+            display: inline-block;
+            animation: slideInLeft 3s ease-in-out infinite;
+        }
+
+        @keyframes fadeInUp {
+            0%, 100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes slideInLeft {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(3px);
+            }
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .header .election-title {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 0.25rem;
+        }
+
+        .header .user-info {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .loading-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .loading-section i {
+            font-size: 3rem;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-section p { margin-top: 1rem; color: var(--text-secondary); }
+
+        .already-voted {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 3rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .already-voted i {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        .already-voted h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--success);
+        }
+
+        .already-voted p { color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+        .already-voted strong { color: var(--text-primary); }
+
+        .voting-section { display: none; }
+
+        .voting-section .section-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .voting-section .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .candidate-card {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .candidate-symbol {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            border: 2px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .candidate-card:hover .candidate-symbol {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(37, 99, 235, 0.1));
+        }
+
+        .candidate-symbol-name {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .candidate-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .candidate-dept {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .logout-btn {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover { color: var(--primary); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            max-width: 420px;
+            width: 90%;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover { color: var(--text-primary); }
+
+        .modal-symbol-text {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-symbol {
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            border: 2px solid var(--primary);
+        }
+
+        .modal-symbol-name {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-candidate-name {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .modal-candidate-dept {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-warning {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-warning p {
+            color: #92400e;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        .btn-primary:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            color: var(--primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-outline:hover { background: var(--primary); color: white; }
+
+        .success-section {
+            display: none;
+            max-width: 450px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .success-section i {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+        }
+
+        .success-section h2 {
+            color: var(--success);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-card {
+            background: var(--surface);
+            border: 2px solid var(--success);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .success-card p { color: var(--text-secondary); margin-bottom: 0.5rem; }
+
+        .success-card .symbol { font-size: 3.5rem; margin: 0.5rem 0; }
+        .success-card .name { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+        .success-card .dept { font-size: 0.85rem; color: var(--text-muted); }
+
+        .success-note {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .success-note p { color: #92400e; font-size: 0.875rem; margin: 0; }
+
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+            .candidates-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+            .candidate-card { padding: 1rem; }
+            .candidate-symbol { width: 60px; height: 60px; font-size: 1.75rem; }
+            .modal-footer { flex-direction: column; }
+            .modal-footer .btn-primary, .modal-footer .btn-outline { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span>Imperial College</span> of Engineering</h1>
+            <p class="election-title">College President Election 2026</p>
+            <p class="user-info" id="user-info">Loading...</p>
+        </div>
+
+        <div id="loading-section" class="loading-section">
+            <i class="fas fa-spinner"></i>
+            <p>Loading...</p>
+        </div>
+
+        <div id="already-voted" style="display: none;">
+            <div class="already-voted">
+                <i class="fas fa-check-circle"></i>
+                <h2>You Have Already Voted!</h2>
+                <p>You voted for:</p>
+                <p><strong id="voted-candidate"></strong></p>
+                <button class="btn-outline" onclick="logout()" style="margin-top: 1.5rem;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <div id="voting-section" class="voting-section">
+            <h2 class="section-title">Select Your Candidate</h2>
+            <p class="section-subtitle">Click on your preferred candidate to cast your vote</p>
+            
+            <div class="candidates-grid" id="candidates-grid"></div>
+            
+            <a href="#" class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+
+        <div id="success-section" class="success-section">
+            <i class="fas fa-check-circle"></i>
+            <h2>Vote Cast Successfully!</h2>
+            
+            <div class="success-card">
+                <p>You voted for:</p>
+                <div class="symbol" id="success-candidate-symbol"></div>
+                <div class="name" id="success-candidate-name"></div>
+                <div class="dept" id="success-candidate-dept"></div>
+            </div>
+            
+            <div class="success-note">
+                <p><i class="fas fa-exclamation-triangle"></i> Remember: You cannot change your vote once submitted.</p>
+            </div>
+            
+            <button class="btn-outline" onclick="logout()" style="margin-top: 1.5rem;">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Your Vote</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div>
+                <p class="modal-symbol-text">You are voting for</p>
+                <div class="modal-symbol" id="confirm-symbol"></div>
+                <div class="modal-symbol-name" id="confirm-symbol-name"></div>
+                <div class="modal-candidate-name" id="confirm-name"></div>
+                <div class="modal-candidate-dept" id="confirm-department"></div>
+                
+                <div class="modal-warning">
+                    <p><i class="fas fa-exclamation-triangle"></i> This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn-primary" id="confirm-vote-btn" onclick="confirmVote()">
+                    <i class="fas fa-check"></i>
+                    Confirm Vote
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const candidates = [
+            { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
+            { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
+            { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
+            { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
+            { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' },
+        ];
+
+        let selectedCandidate = null;
+        let currentUser = null;
+
+        function init() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            currentUser = JSON.parse(stored);
+            document.getElementById('user-info').textContent = 'Logged in as: ' + currentUser.email;
+            
+            document.getElementById('loading-section').style.display = 'none';
+            
+            // Check with Firebase API to verify voting status
+            checkVotingStatus();
+        }
+        
+        async function checkVotingStatus() {
+            try {
+                const response = await fetch('/api/check-vote/' + encodeURIComponent(currentUser.email));
+                const data = await response.json();
+                
+                if (data.hasVoted) {
+                    // Update localStorage with true status from Firebase
+                    currentUser.hasVoted = true;
+                    currentUser.votedFor = data.votedFor;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    
+                    document.getElementById('already-voted').style.display = 'block';
+                    document.getElementById('voted-candidate').textContent = data.votedFor;
+                } else {
+                    document.getElementById('voting-section').style.display = 'block';
+                    renderCandidates();
+                }
+            } catch(e) {
+                console.error('Error checking voting status:', e);
+                // Fallback to localStorage check
+                if (currentUser.hasVoted) {
+                    document.getElementById('already-voted').style.display = 'block';
+                    document.getElementById('voted-candidate').textContent = currentUser.votedFor;
+                } else {
+                    document.getElementById('voting-section').style.display = 'block';
+                    renderCandidates();
+                }
+            }
+        }
+
+        function renderCandidates() {
+            const grid = document.getElementById('candidates-grid');
+            grid.innerHTML = candidates.map(c => 
+                '<div class="candidate-card" onclick="selectCandidate(' + c.id + ')">' +
+                    '<div class="candidate-symbol-name">' + c.symbolName + '</div>' +
+                    '<div class="candidate-symbol">' + c.symbol + '</div>' +
+                    '<div class="candidate-name">' + c.name + '</div>' +
+                    '<div class="candidate-dept">' + c.department + '</div>' +
+                '</div>'
+            ).join('');
+        }
+
+        function selectCandidate(id) {
+            selectedCandidate = candidates.find(c => c.id === id);
+            
+            document.getElementById('confirm-symbol').textContent = selectedCandidate.symbol;
+            document.getElementById('confirm-symbol-name').textContent = selectedCandidate.symbolName;
+            document.getElementById('confirm-name').textContent = selectedCandidate.name;
+            document.getElementById('confirm-department').textContent = selectedCandidate.department;
+            
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            selectedCandidate = null;
+        }
+
+        async function confirmVote() {
+            if (!selectedCandidate) {
+                alert('No candidate selected');
+                return;
+            }
+            if (!currentUser || !currentUser.email) {
+                alert('Session expired');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const btn = document.getElementById('confirm-vote-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+            let serverVoteId = null;
+            
+            // Prepare vote data for Firebase
+            const voteDataForFirebase = {
+                id: voteId,
+                userEmail: currentUser.email,
+                candidateId: selectedCandidate.id,
+                candidateName: selectedCandidate.name,
+                candidateDepartment: selectedCandidate.department || '',
+                candidateSymbol: selectedCandidate.symbol || '',
+                candidateSymbolName: selectedCandidate.symbolName || ''
+            };
+            
+            // Save to Firebase first (for cross-device sync)
+            try {
+                await FirebaseService.saveVote(voteDataForFirebase);
+            } catch (e) {
+                console.log('Firebase save failed, continuing:', e);
+            }
+            
+            try {
+                const response = await fetch('/api/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        candidateId: selectedCandidate.id
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Server response:', data);
+                
+                if (data.success) {
+                    // Use server-generated voteId if available
+                    serverVoteId = data.voteId;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error: Could not connect to server. Vote saved locally only.');
+            }
+
+            // Use server voteId or generate local one
+            const voteId = serverVoteId || Date.now().toString().slice(-8);
+            const timestamp = Date.now();
+            
+            // Update local storage FIRST before redirect
+            currentUser.hasVoted = true;
+            currentUser.votedFor = selectedCandidate.symbol + ' ' + selectedCandidate.name;
+            currentUser.voteId = voteId;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            const voteRecord = {
+                id: voteId,
+                userEmail: currentUser.email,
+                candidateId: selectedCandidate.id,
+                candidateName: selectedCandidate.name,
+                candidateDepartment: selectedCandidate.department,
+                candidateSymbol: selectedCandidate.symbol,
+                candidateSymbolName: selectedCandidate.symbolName,
+                timestamp: timestamp
+            };
+            
+            const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+            votes.push(voteRecord);
+            localStorage.setItem('votes', JSON.stringify(votes));
+            
+            // Store vote details in localStorage for the confirmation page
+            localStorage.setItem('voteReceipt', JSON.stringify({
+                voteId: voteId,
+                symbol: selectedCandidate.symbol,
+                name: selectedCandidate.name,
+                department: selectedCandidate.department,
+                timestamp: timestamp
+            }));
+            
+        // Build the redirect URL with all required parameters - use absolute path
+            const baseUrl = window.location.origin;
+            const redirectUrl = baseUrl + '/vote-success.html?id=' + voteId + 
+                '&symbol=' + encodeURIComponent(selectedCandidate.symbol) + 
+                '&name=' + encodeURIComponent(selectedCandidate.name) + 
+                '&dept=' + encodeURIComponent(selectedCandidate.department) + 
+                '&time=' + timestamp;
+            
+            console.log('Redirecting to:', redirectUrl);
+            
+            // Use setTimeout to ensure localStorage is saved before redirect
+            setTimeout(function() {
+                // Try JavaScript redirect first
+                window.location.href = redirectUrl;
+                
+                // Fallback: Update meta refresh in case JS fails
+                const meta = document.getElementById('redirect-meta');
+                if (meta) {
+                    meta.setAttribute('content', '0;url=' + redirectUrl);
+                }
+            }, 800);
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>
+

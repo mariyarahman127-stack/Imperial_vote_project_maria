@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Vote - UniVote</title>
+    <meta id="redirect-meta" http-equiv="refresh" content="999;url=">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-service.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); min-height: 100vh; color: var(--text-primary); }
+        .container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; animation: fadeInUp 3s ease-in-out infinite; }
+        .header h1 span { color: var(--primary); display: inline-block; animation: slideInLeft 3s ease-in-out infinite; }
+        @keyframes fadeInUp { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.8; transform: translateY(-5px); } }
+        @keyframes slideInLeft { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+        .header p { color: var(--text-secondary); font-size: 1rem; }
+        .header .election-title { color: var(--primary); font-weight: 600; font-size: 1.1rem; margin-top: 0.25rem; }
+        .header .user-info { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem; }
+        .loading-section { text-align: center; padding: 4rem 2rem; }
+        .loading-section i { font-size: 3rem; color: var(--primary); animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .loading-section p { margin-top: 1rem; color: var(--text-secondary); }
+        .already-voted { max-width: 500px; margin: 0 auto; background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 3rem; text-align: center; border: 1px solid var(--border); }
+        .already-voted i { font-size: 4rem; color: var(--success); margin-bottom: 1rem; }
+        .already-voted h2 { font-size: 1.5rem; margin-bottom: 1rem; color: var(--success); }
+        .already-voted p { color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .already-voted strong { color: var(--text-primary); }
+        .voting-section { display: none; }
+        .voting-section .section-title { text-align: center; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .voting-section .section-subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 2rem; }
+        .candidates-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .candidate-card { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; text-align: center; cursor: pointer; transition: var(--transition); }
+        .candidate-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: var(--shadow-lg); }
+        .candidate-symbol { width: 80px; height: 80px; margin: 0 auto 1rem; background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 2px solid var(--border); transition: var(--transition); }
+        .candidate-card:hover .candidate-symbol { border-color: var(--primary); background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(37, 99, 235, 0.1)); }
+        .candidate-symbol-name { font-size: 0.75rem; color: var(--primary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .candidate-name { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .candidate-dept { font-size: 0.75rem; color: var(--text-muted); }
+        .logout-btn { display: block; text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: 0.9rem; }
+        .logout-btn:hover { color: var(--primary); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--surface); border-radius: var(--radius-xl); max-width: 420px; width: 90%; padding: 2rem; box-shadow: var(--shadow-lg); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: var(--transition); }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-symbol-text { text-align: center; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .modal-symbol { width: 90px; height: 90px; margin: 0 auto 1rem; background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 2px solid var(--primary); }
+        .modal-symbol-name { text-align: center; font-size: 0.8rem; color: var(--primary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .modal-candidate-name { text-align: center; font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .modal-candidate-dept { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .modal-warning { background: #fef3c7; border: 1px solid #fcd34d; border-radius: var(--radius-md); padding: 0.75rem; text-align: center; margin-bottom: 1.5rem; }
+        .modal-warning p { color: #92400e; font-size: 0.8rem; margin: 0; }
+        .modal-footer { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
+        .btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-md); border: none; cursor: pointer; transition: var(--transition); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+        .btn-outline { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: transparent; color: var(--primary); font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; border-radius: var(--radius-md); border: 2px solid var(--primary); cursor: pointer; transition: var(--transition); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+        @media (max-width: 640px) { .container { padding: 1rem; } .candidates-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; } .candidate-card { padding: 1rem; } .candidate-symbol { width: 60px; height: 60px; font-size: 1.75rem; } .modal-footer { flex-direction: column; } .modal-footer .btn-primary, .modal-footer .btn-outline { width: 100%; justify-content: center; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span>Imperial College</span> of Engineering</h1>
+            <p class="election-title">College President Election 2026</p>
+            <p class="user-info" id="user-info">Loading...</p>
+        </div>
+        <div id="loading-section" class="loading-section">
+            <i class="fas fa-spinner"></i>
+            <p>Loading...</p>
+        </div>
+        <div id="already-voted" style="display: none;">
+            <div class="already-voted">
+                <i class="fas fa-check-circle"></i>
+                <h2>You Have Already Voted!</h2>
+                <p>You voted for:</p>
+                <p><strong id="voted-candidate"></strong></p>
+                <button class="btn-outline" onclick="logout()" style="margin-top: 1.5rem;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        <div id="voting-section" class="voting-section">
+            <h2 class="section-title">Select Your Candidate</h2>
+            <p class="section-subtitle">Click on your preferred candidate to cast your vote</p>
+            <div class="candidates-grid" id="candidates-grid"></div>
+            <a href="#" class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Your Vote</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div>
+                <p class="modal-symbol-text">You are voting for</p>
+                <div class="modal-symbol" id="confirm-symbol"></div>
+                <div class="modal-symbol-name" id="confirm-symbol-name"></div>
+                <div class="modal-candidate-name" id="confirm-name"></div>
+                <div class="modal-candidate-dept" id="confirm-department"></div>
+                <div class="modal-warning">
+                    <p><i class="fas fa-exclamation-triangle"></i> This action cannot be undone.</p>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn-primary" id="confirm-vote-btn" onclick="confirmVote()">
+                    <i class="fas fa-check"></i> Confirm Vote
+                </button>
+            </div>
+    </div>
+    <script>
+        const candidates = [
+            { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
+            { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
+            { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
+            { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
+            { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' },
+        ];
+        let selectedCandidate = null;
+        let currentUser = null;
+        let generatedVoteId = null;
+        let votingSchedule = null;
+        
+        function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+        
+        async function checkServerVoteStatus(email) {
+            try {
+                const response = await fetch('/api/check-vote/' + encodeURIComponent(email));
+                return await response.json();
+            } catch (error) { console.error('Error checking vote status:', error); return { hasVoted: false }; }
+        }
+        
+        // Load voting schedule from Firebase
+        async function loadVotingSchedule() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
+                    votingSchedule = snapshot.val();
+                    console.log('Voting schedule loaded from Firebase:', votingSchedule);
+                    
+                    // If Firebase returns null, clear localStorage to prevent stale data
+                    if (!votingSchedule) {
+                        console.log('Firebase returned null, clearing localStorage to prevent stale data');
+                        localStorage.removeItem('votingSchedule');
+                    }
+                }
+                
+                // Fallback to localStorage ONLY if Firebase is not available
+                if (!votingSchedule && typeof firebase === 'undefined') {
+                    const localSchedule = localStorage.getItem('votingSchedule');
+                    if (localSchedule) {
+                        votingSchedule = JSON.parse(localSchedule);
+                        console.log('Voting schedule loaded from localStorage (Firebase not available):', votingSchedule);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading voting schedule:', error);
+            }
+        }
+        
+        // Check if voting is currently allowed
+        function isVotingAllowed() {
+            if (!votingSchedule) {
+                return { allowed: false, message: 'Voting schedule not available. Please contact administrator.' };
+            }
+            
+            const now = Date.now();
+            const startTime = votingSchedule.startTime;
+            const endTime = votingSchedule.endTime;
+            
+            console.log('Current time (UTC):', new Date(now).toISOString());
+            console.log('Current time (local):', new Date(now).toLocaleString());
+            console.log('Start time (UTC):', new Date(startTime).toISOString());
+            console.log('Start time (local):', new Date(startTime).toLocaleString());
+            console.log('End time (UTC):', new Date(endTime).toISOString());
+            console.log('End time (local):', new Date(endTime).toLocaleString());
+            console.log('Now < startTime:', now < startTime);
+            console.log('Now > endTime:', now > endTime);
+            
+            if (now < startTime) {
+                const timeUntilStart = startTime - now;
+                const hours = Math.floor(timeUntilStart / (1000 * 60 * 60));
+                const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+                return {
+                    allowed: false,
+                    message: `Voting has not started yet. Voting begins in ${hours}h ${minutes}m.`,
+                    startTime: startTime,
+                    endTime: endTime
+                };
+            }
+            
+            if (now > endTime) {
+                return {
+                    allowed: false,
+                    message: 'Voting has ended.',
+                    startTime: startTime,
+                    endTime: endTime
+                };
+            }
+            
+            const timeUntilEnd = endTime - now;
+            const hours = Math.floor(timeUntilEnd / (1000 * 60 * 60));
+            const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+            return {
+                allowed: true,
+                message: `Voting is active. Time remaining: ${hours}h ${minutes}m`,
+                startTime: startTime,
+                endTime: endTime
+            };
+        }
+        
+        async function init() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) { window.location.href = '/login.html'; return; }
+            currentUser = JSON.parse(stored);
+            if (!currentUser.email || !isValidEmail(currentUser.email)) {
+                alert('Invalid email address. Please login with a valid email.');
+                localStorage.removeItem('currentUser');
+                window.location.href = '/login.html';
+                return;
+            }
+            document.getElementById('user-info').textContent = 'Logged in as: ' + currentUser.email;
+            
+            // Load voting schedule
+            await loadVotingSchedule();
+            
+            // CRITICAL: Check if votingSchedule is null FIRST before any other checks
+            if (!votingSchedule) {
+                console.error('Voting schedule is null or undefined!');
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('voting-section').innerHTML = `
+                    <div style="background: white; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+                        <h2 style="color: #333; margin-bottom: 15px;">Configuration Error</h2>
+                        <p style="color: #666; font-size: 16px; margin-bottom: 20px;">Voting schedule is not configured. Please contact administrator.</p>
+                        <button class="btn-outline" onclick="logout()" style="margin-top: 20px;">Logout</button>
+                    </div>
+                `;
+                document.getElementById('voting-section').style.display = 'block';
+                return;
+            }
+            
+            // Check if voting is allowed
+            const votingStatus = isVotingAllowed();
+            console.log('Voting status:', votingStatus);
+            
+            if (!votingStatus.allowed) {
+                // Show voting schedule message
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('voting-section').innerHTML = `
+                    <div style="background: white; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div style="font-size: 64px; margin-bottom: 20px;">⏰</div>
+                        <h2 style="color: #333; margin-bottom: 15px;">Voting Not Available</h2>
+                        <p style="color: #666; font-size: 16px; margin-bottom: 20px;">${votingStatus.message}</p>
+                        ${votingStatus.startTime ? `<p style="color: #888; font-size: 14px;">Scheduled: ${new Date(votingStatus.startTime).toLocaleString()} - ${new Date(votingStatus.endTime).toLocaleString()}</p>` : ''}
+                        <button class="btn-outline" onclick="logout()" style="margin-top: 20px;">Logout</button>
+                    </div>
+                `;
+                document.getElementById('voting-section').style.display = 'block';
+                return;
+            }
+            
+            const serverStatus = await checkServerVoteStatus(currentUser.email);
+            document.getElementById('loading-section').style.display = 'none';
+            if (currentUser.hasVoted || serverStatus.hasVoted) {
+                currentUser.hasVoted = true;
+                currentUser.votedFor = serverStatus.votedFor || currentUser.votedFor;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                document.getElementById('already-voted').style.display = 'block';
+                document.getElementById('voted-candidate').textContent = currentUser.votedFor || serverStatus.votedFor || 'Unknown';
+            } else {
+                document.getElementById('voting-section').style.display = 'block';
+                renderCandidates();
+            }
+        }
+        function renderCandidates() {
+            const grid = document.getElementById('candidates-grid');
+            grid.innerHTML = candidates.map(c => 
+                '<div class="candidate-card" onclick="selectCandidate(' + c.id + ')">' +
+                    '<div class="candidate-symbol-name">' + c.symbolName + '</div>' +
+                    '<div class="candidate-symbol">' + c.symbol + '</div>' +
+                    '<div class="candidate-name">' + c.name + '</div>' +
+                    '<div class="candidate-dept">' + c.department + '</div>' +
+                '</div>'
+            ).join('');
+        }
+        function selectCandidate(id) {
+            selectedCandidate = candidates.find(c => c.id === id);
+            document.getElementById('confirm-symbol').textContent = selectedCandidate.symbol;
+            document.getElementById('confirm-symbol-name').textContent = selectedCandidate.symbolName;
+            document.getElementById('confirm-name').textContent = selectedCandidate.name;
+            document.getElementById('confirm-department').textContent = selectedCandidate.department;
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('confirm-modal').classList.remove('active');
+            selectedCandidate = null;
+        }
+        function generateVoteId() { return Date.now().toString().slice(-8); }
+        async function submitVoteToServer(voteData) {
+            try {
+                generatedVoteId = generateVoteId();
+                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                const response = await fetch('/api/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: voteData.userEmail, 
+                        studentId: currentUser.studentId || (voteData.userEmail ? voteData.userEmail.split('@')[0] : null),
+                        candidateId: voteData.candidateId, 
+                        voteId: generatedVoteId 
+                    })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) return { success: true, voteId: generatedVoteId };
+                if (data && data.hasVoted) return { success: false, alreadyVoted: true, message: data.message || 'Already voted' };
+                return { success: false, message: (data && data.message) || 'Server vote submission failed' };
+            } catch (error) { 
+                console.error('Server error:', error); 
+                return { success: false, message: 'Unable to connect to server. Please check your internet connection and try again.' }; 
+            }
+        }
+        function saveVoteToLocal(voteData) {
+            const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+            const existing = votes.find(v => v.userEmail && v.userEmail.toLowerCase() === voteData.userEmail.toLowerCase());
+            if (existing) return { success: false, alreadyVoted: true, message: 'Already voted' };
+            const voteId = generateVoteId();
+            votes.push({ id: voteId, userEmail: voteData.userEmail.toLowerCase(), candidateId: voteData.candidateId, candidateName: voteData.candidateName, candidateDepartment: voteData.candidateDepartment, candidateSymbol: voteData.candidateSymbol, candidateSymbolName: voteData.candidateSymbolName, timestamp: Date.now(), timestampRaw: Date.now() });
+            localStorage.setItem('votes', JSON.stringify(votes));
+            return { success: true, voteId: voteId };
+        }
+        async function confirmVote() {
+            if (!selectedCandidate) { alert('No candidate selected'); return; }
+            if (!currentUser || !currentUser.email) { alert('Session expired'); window.location.href = '/login.html'; return; }
+            
+            // Check if already voted in localStorage
+            const existingVotes = JSON.parse(localStorage.getItem('votes') || '[]');
+            const alreadyVotedLocal = existingVotes.some(v => v.userEmail && v.userEmail.toLowerCase() === currentUser.email.toLowerCase());
+            
+            // Check if already voted in Firebase
+            let alreadyVotedFirebase = false;
+            try {
+                if (typeof FirebaseService !== 'undefined') {
+                    alreadyVotedFirebase = await FirebaseService.checkDuplicateVote(currentUser.email);
+                }
+            } catch (e) {
+                console.log('Firebase check failed:', e);
+            }
+            
+            if (alreadyVotedLocal || alreadyVotedFirebase || currentUser.hasVoted) {
+                alert('You have already voted!');
+                window.location.href = '/voter-dashboard.html';
+                return;
+            }
+            
+            const btn = document.getElementById('confirm-vote-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            const voteId = generateVoteId();
+            const voteData = { id: voteId, userEmail: currentUser.email, candidateId: selectedCandidate.id, candidateName: selectedCandidate.name, candidateDepartment: selectedCandidate.department, candidateSymbol: selectedCandidate.symbol, candidateSymbolName: selectedCandidate.symbolName };
+            
+            // Try to save to Firebase first (for cross-device sync)
+            try {
+                await FirebaseService.saveVote(voteData);
+            } catch (e) {
+                console.log('Firebase save failed, continuing with server:', e);
+            }
+            
+            const result = await submitVoteToServer(voteData);
+            if (result && result.success) {
+                currentUser.hasVoted = true;
+                currentUser.votedFor = selectedCandidate.symbol + ' ' + selectedCandidate.name;
+                currentUser.voteId = result.voteId;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                closeModal();
+                showSuccess(selectedCandidate, result.voteId);
+            } else if (result && result.alreadyVoted) {
+                alert('You have already voted!');
+                currentUser.hasVoted = true;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                closeModal();
+                showSuccess(selectedCandidate, generatedVoteId);
+            } else {
+                const localResult = saveVoteToLocal(voteData);
+                if (localResult.success) {
+                    currentUser.hasVoted = true;
+                    currentUser.votedFor = selectedCandidate.symbol + ' ' + selectedCandidate.name;
+                    currentUser.voteId = localResult.voteId;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeModal();
+                    showSuccess(selectedCandidate, localResult.voteId);
+                } else { alert('Error saving vote: ' + (result ? result.message : 'Unknown error')); }
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check"></i> Confirm Vote';
+        }
+        function showSuccess(candidate, voteId) {
+            const timestamp = Date.now();
+            // Build redirect URL with all required parameters - use absolute path
+            const baseUrl = window.location.origin;
+            const redirectUrl = baseUrl + '/vote-success.html?id=' + voteId +
+                '&symbol=' + encodeURIComponent(candidate.symbol) +
+                '&name=' + encodeURIComponent(candidate.name) + 
+                '&dept=' + encodeURIComponent(candidate.department) + 
+                '&time=' + timestamp;
+            
+            console.log('Redirecting to success page:', redirectUrl);
+            
+            // Use setTimeout to ensure smooth redirect
+            setTimeout(function() {
+                // Try JavaScript redirect first
+                window.location.href = redirectUrl;
+                
+                // Fallback: Update meta refresh in case JS fails
+                const meta = document.getElementById('redirect-meta');
+                if (meta) {
+                    meta.setAttribute('content', '0;url=' + redirectUrl);
+                }
+            }, 800);
+        }
+        function logout() { localStorage.removeItem('currentUser'); window.location.href = '/login.html'; }
+        init();
+    </script>
+</body>
+</html>

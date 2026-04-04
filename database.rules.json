@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "votes": {
+      ".read": true,
+      ".write": true,
+      "$voteId": {
+        ".validate": "newData.hasChildren(['userEmail', 'candidateId', 'candidateName', 'candidateDepartment', 'candidateSymbol', 'candidateSymbolName', 'timestamp', 'timestampRaw'])"
+      }
+    },
+    "voters": {
+      ".read": true,
+      ".write": true,
+      "$voterId": {
+        ".validate": "newData.hasChildren(['email', 'hasVoted', 'votedFor', 'votedAt', 'voteId'])"
+      }
+    },
+    "registeredUsers": {
+      ".read": true,
+      ".write": true,
+      "$userId": {
+        ".validate": "newData.hasChildren(['email', 'name', 'role'])"
+      }
+    },
+    "Administration": {
+      ".read": true,
+      ".write": true,
+      "$adminId": {
+        ".validate": "newData.hasChildren(['email', 'name', 'role'])"
+      }
+    },
+    "votingSchedule": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

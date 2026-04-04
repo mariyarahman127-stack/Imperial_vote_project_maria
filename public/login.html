@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - UniVote</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-service.js"></script>
+    <style>
+        :root { --primary: #2563eb; --primary-dark: #1d4ed8; --success: #10b981; --surface: #ffffff; --text-primary: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8; --border: #e2e8f0; --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1); --radius-md: 12px; --radius-xl: 24px; --transition: all 0.3s ease; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .login-container { width: 100%; max-width: 450px; }
+        .login-card { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); padding: 2.5rem; border: 1px solid var(--border); }
+        .login-header { text-align: center; margin-bottom: 2rem; }
+        .logo { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; }
+        .login-header h1 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+        .login-header p { font-size: 0.875rem; color: var(--text-secondary); }
+        .login-header p.election-year { color: var(--primary); font-weight: 500; }
+        .login-subtitle { font-size: 0.95rem; color: var(--text-secondary); margin-top: 0.5rem; }
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-primary); margin-bottom: 0.5rem; }
+        .form-input { width: 100%; padding: 0.875rem 1rem; background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-md); font-family: 'Poppins', sans-serif; font-size: 0.95rem; color: var(--text-primary); transition: var(--transition); }
+        .form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; padding: 1rem; background: var(--primary); color: white; font-family: 'Poppins', sans-serif; font-size: 1rem; font-weight: 600; border-radius: var(--radius-md); border: none; cursor: pointer; transition: var(--transition); }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
+        .info-box { margin-top: 1.5rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); text-align: center; }
+        .info-box p { color: var(--success); font-size: 0.875rem; font-weight: 500; margin: 0; }
+        .info-box p.hint { color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem; }
+        .admin-link, .back-link { margin-top: 1.5rem; text-align: center; }
+        .admin-link a, .back-link a { color: var(--text-secondary); font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .admin-link a:hover, .back-link a:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <a href="index.html" class="logo"><i class="fas fa-vote-yea"></i><span>UniVote</span></a>
+                <h1>Imperial College of Engineering</h1>
+                <p class="election-year">College President Election 2026</p>
+                <p class="login-subtitle">Login to cast your vote</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">University Email / Student ID</label>
+                    <input type="text" id="email" class="form-input" placeholder="e.g., 19131@imperial.edu.bd" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                </div>
+                <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
+                    <a href="forgot-password.html" style="color: #667eea; font-size: 0.875rem; text-decoration: none;">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Login</button>
+            </form>
+            <div class="info-box">
+                <p><i class="fas fa-user-plus"></i> <strong>New?</strong> Create your own password!</p>
+                <p class="hint"><a href="register.html" style="color:#667eea;font-weight:600;">Click here to Register</a></p>
+            </div>
+            <div class="admin-link"><a href="admin-login.html"><i class="fas fa-crown"></i> Admin Login</a></div>
+            <div class="back-link"><a href="index.html"><i class="fas fa-arrow-left"></i> Back to Home</a></div>
+        </div>
+    </div>
+    <script>
+        function isValidUniversityEmail(email) {
+            if (!email) return false;
+            var emailRegex = /^[0-9]+@imperial\.edu\.bd$/i;
+            return emailRegex.test(email);
+        }
+        
+        async function checkVotingStatus(email) {
+            try {
+                if (typeof FirebaseService !== 'undefined') {
+                    var hasVoted = await FirebaseService.checkDuplicateVote(email);
+                    if (hasVoted) {
+                        var allVotes = await FirebaseService.getAllVotes();
+                        var userVote = allVotes.find(function(v) { return v.userEmail && v.userEmail.toLowerCase() === email.toLowerCase(); });
+                        return { hasVoted: true, votedFor: userVote ? userVote.candidateSymbol + ' ' + userVote.candidateName : null };
+                    }
+                    return { hasVoted: false, votedFor: null };
+                }
+            } catch (error) {
+                console.error('Error checking voting status:', error);
+            }
+            var localVotes = JSON.parse(localStorage.getItem('votes') || '[]');
+            var localVote = localVotes.find(function(v) { return v.userEmail && v.userEmail.toLowerCase() === email.toLowerCase(); });
+            return { hasVoted: !!localVote, votedFor: localVote ? localVote.candidateSymbol + ' ' + localVote.candidateName : null };
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var email = document.getElementById('email').value.toLowerCase().trim();
+            var password = document.getElementById('password').value;
+            var submitBtn = this.querySelector('button[type="submit"]');
+            
+            if (!email || !password) { alert('Please enter email and password'); return; }
+            if (!isValidUniversityEmail(email)) { alert('Invalid email format. Use: ID@imperial.edu.bd'); return; }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            
+            try {
+                // Extract student ID from email (e.g., "19131" from "19131@imperial.edu.bd")
+                var studentId = email.split('@')[0];
+                
+                // Call the API for login
+                var response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, studentId: studentId, password: password })
+                });
+                
+                var result = await response.json();
+                
+                if (result.success) {
+                    // Store user info in localStorage
+                    localStorage.setItem('currentUser', JSON.stringify(result.user));
+                    
+                    // Redirect based on role
+                    if (result.user.role === 'admin') {
+                        window.location.href = '/admin-dashboard.html';
+                    } else {
+                        window.location.href = '/voter-dashboard.html';
+                    }
+                } else {
+                    alert(result.message || 'Login failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            }
+        });
+    </script>
+</body>
+</html>
+

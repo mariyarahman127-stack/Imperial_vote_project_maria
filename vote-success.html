@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Confirmation - UniVote</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #1e293b;
+        }
+        
+        .success-card {
+            background: white;
+            border-radius: 20px;
+            max-width: 450px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        .success-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 40px;
+        }
+        
+        .success-title {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .success-subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .success-body {
+            padding: 30px 20px;
+        }
+        
+        .receipt-box {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .receipt-label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .receipt-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .candidate-box {
+            background: linear-gradient(135deg, rgba(102,126,234,0.1), rgba(118,75,162,0.1));
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .candidate-symbol {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+        
+        .candidate-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        
+        .candidate-dept {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        
+        .vote-timestamp {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .timestamp-label {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .timestamp-value {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #1e293b;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 14px 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd6;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .btn-outline:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .btn-print {
+            margin-top: 10px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+        }
+        
+        .btn-print:hover {
+            background: #e2e8f0;
+        }
+        
+        .warning-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fef3c7;
+            border-radius: 10px;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .warning-text {
+            color: #92400e;
+            font-size: 13px;
+            margin: 0;
+        }
+        
+        .not-found {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .not-found-icon {
+            font-size: 60px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+        
+        .not-found h2 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .not-found p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 480px) {
+            .action-buttons { flex-direction: column; }
+            .vote-timestamp { flex-direction: column; gap: 10px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-card" id="success-card">
+        <!-- Content will be inserted here by JavaScript -->
+    </div>
+
+    <script>
+        console.log('vote-success.html loading...');
+        
+        // Get URL parameters immediately
+        const urlParams = new URLSearchParams(window.location.search);
+        let voteId = urlParams.get('id') || '';
+        let candidateSymbol = urlParams.get('symbol') || '✓';
+        let candidateName = urlParams.get('name') || '';
+        let candidateDept = urlParams.get('dept') || 'CSE Department';
+        let timestamp = urlParams.get('time') || Date.now().toString();
+
+        console.log('voteId from URL:', voteId);
+        console.log('candidateName from URL:', candidateName);
+
+        // Fallback: Try to get from localStorage if needed
+        try {
+            if (!voteId) {
+                const stored = localStorage.getItem('voteReceipt');
+                if (stored) {
+                    const receipt = JSON.parse(stored);
+                    voteId = voteId || receipt.voteId || '';
+                    candidateSymbol = candidateSymbol || receipt.symbol || '✓';
+                    candidateName = candidateName || receipt.name || '';
+                    candidateDept = candidateDept || receipt.department || 'CSE Department';
+                    timestamp = timestamp || receipt.timestamp || Date.now().toString();
+                }
+            }
+            
+            if (!voteId) {
+                const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                if (user.voteId) voteId = user.voteId;
+                if (user.votedFor && !candidateName) {
+                    candidateName = user.votedFor;
+                }
+            }
+        } catch(e) {
+            console.log('Error:', e);
+        }
+
+        // Get today's date/time
+        const date = new Date();
+        const formattedDate = date.toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        const formattedTime = date.toLocaleTimeString('en-US', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+
+        // Build the HTML
+        const container = document.getElementById('success-card');
+        
+        if (!voteId) {
+            container.innerHTML = '<div class="not-found">' +
+                '<div class="not-found-icon">?</div>' +
+                '<h2>No vote information found</h2>' +
+                '<p>Your vote may not have been recorded properly.</p>' +
+                '<a href="voter-dashboard.html" class="btn btn-primary">Go to Dashboard</a>' +
+            '</div>';
+        } else {
+            container.innerHTML = '<div class="success-header">' +
+                '<div class="success-icon">✓</div>' +
+                '<h1 class="success-title">Vote Cast Successfully!</h1>' +
+                '<p class="success-subtitle">Thank you for participating in the election</p>' +
+            '</div>' +
+            '<div class="success-body">' +
+                '<div class="receipt-box">' +
+                    '<div class="receipt-label">Vote Receipt ID</div>' +
+                    '<div class="receipt-value">#' + voteId + '</div>' +
+                '</div>' +
+                '<div class="candidate-box">' +
+                    '<div class="receipt-label">You voted for</div>' +
+                    '<div class="candidate-symbol">' + candidateSymbol + '</div>' +
+                    '<div class="candidate-name">' + candidateName + '</div>' +
+                    '<div class="candidate-dept">' + candidateDept + '</div>' +
+                '</div>' +
+                '<div class="vote-timestamp">' +
+                    '<div>' +
+                        '<div class="timestamp-label">Date</div>' +
+                        '<div class="timestamp-value">' + formattedDate + '</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<div class="timestamp-label">Time</div>' +
+                        '<div class="timestamp-value">' + formattedTime + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="action-buttons">' +
+                    '<a href="voter-dashboard.html" class="btn btn-primary">Dashboard</a>' +
+                    '<a href="results.html" class="btn btn-outline">Results</a>' +
+                '</div>' +
+                '<button class="btn btn-print" onclick="window.print()">Print Receipt</button>' +
+                '<div class="warning-box">' +
+                    '<p class="warning-text">⚠ Please save your Vote Receipt ID (#' + voteId + '). You cannot change your vote once submitted.</p>' +
+                '</div>';
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Results - Imperial College of Engineering</title>
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition); }
+
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header { margin-bottom: 2rem; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo i { font-size: 1.75rem; }
+
+        .sidebar-nav { flex: 1; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i { width: 20px; text-align: center; }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-logout:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        .dashboard-header { margin-bottom: 2rem; }
+
+        .dashboard-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .results-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-header h3 { font-size: 1.25rem; font-weight: 600; }
+        .card-header i { color: var(--primary); font-size: 1.25rem; }
+        .card-body { padding: 1.5rem; }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 1.25rem;
+            background: var(--surface-alt);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .result-item:hover { transform: translateX(5px); box-shadow: var(--shadow); }
+        .result-item:last-child { margin-bottom: 0; }
+
+        .result-rank {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .result-rank.first { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+        .result-symbol {
+            width: 56px;
+            height: 56px;
+            background: var(--surface);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            border: 2px solid var(--border);
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .result-info { flex: 1; }
+
+        .result-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-symbol-name {
+            font-size: 0.7rem;
+            color: #10b981;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .result-dept { font-size: 0.8rem; color: var(--text-muted); }
+        .result-progress { margin-top: 0.75rem; }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .result-stats {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-left: 1rem;
+        }
+
+        .result-votes { font-size: 0.9rem; color: var(--text-secondary); min-width: 80px; text-align: right; }
+        .result-percentage { font-size: 1.5rem; font-weight: 700; color: var(--primary); min-width: 60px; text-align: right; }
+
+        .results-locked { text-align: center; padding: 4rem 2rem; }
+
+        .results-locked-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.5rem;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--primary);
+        }
+
+        .results-locked h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .results-locked p { color: var(--text-secondary); margin-bottom: 0.5rem; }
+        .results-locked .hint { color: var(--text-muted); font-size: 0.875rem; }
+
+        .no-votes { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .no-votes i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .admin-stats { grid-template-columns: 1fr; }
+            .result-item { flex-wrap: wrap; }
+            .result-stats { width: 100%; margin-left: 0; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); justify-content: space-between; }
+        }
+    </style>
+</head>
+<body data-page="results">
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="logo">
+                    <i class="fas fa-vote-yea"></i>
+                    <span>UniVote</span>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="voter-dashboard.html" class="nav-item">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vote.html" class="nav-item">
+                    <i class="fas fa-vote-yea"></i>
+                    <span>Cast Vote</span>
+                </a>
+                <a href="results.html" class="nav-item active">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Results</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Imperial College of Engineering</h1>
+                <p class="dashboard-subtitle">College President Election 2026</p>
+            </div>
+
+            <div class="admin-stats" id="admin-stats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-votes">0</div>
+                    <div class="stat-label">Total Votes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="turnout">0%</div>
+                    <div class="stat-label">Turnout</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="remaining">500</div>
+                    <div class="stat-label">Remaining</div>
+                </div>
+            </div>
+
+            <div class="results-card">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3>Election Results</h3>
+                </div>
+                <div class="card-body" id="results-container">
+                    <div class="no-votes">
+                        <i class="fas fa-vote-yea"></i>
+                        <p>Loading results...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const totalVoters = 500;
+        let currentUser = null;
+        let resultsData = null;
+
+        function checkAuth() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) { window.location.href = 'login.html'; return; }
+            currentUser = JSON.parse(stored);
+            const isAdmin = currentUser.role === 'admin' || currentUser.role === 'chairperson';
+            document.getElementById('admin-stats').style.display = isAdmin ? 'grid' : 'none';
+        }
+
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/results');
+                if (response.ok) { resultsData = await response.json(); }
+            } catch (error) { resultsData = { candidates: [], totalVotes: 0 }; }
+        }
+
+        async function renderResults() {
+            await loadResults();
+            const totalVotes = resultsData.totalVotes;
+            const sorted = resultsData.candidates.sort((a, b) => b.votes - a.votes);
+            const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'chairperson');
+
+            if (isAdmin) {
+                document.getElementById('total-votes').textContent = totalVotes;
+                document.getElementById('turnout').textContent = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 100) + '%' : '0%';
+                document.getElementById('remaining').textContent = totalVoters - totalVotes;
+            }
+
+            let html = '';
+            
+            if (!isAdmin) {
+                html = '<div class="results-locked"><div class="results-locked-icon"><i class="fas fa-lock"></i></div><h2>Results Not Available</h2><p>Only administrators can view election results.</p><p class="hint">Results will be published after the election ends.</p></div>';
+            } else {
+                if (sorted.length === 0) {
+                    html = '<div class="no-votes"><i class="fas fa-vote-yea"></i><p>No votes yet. Be the first to vote!</p></div>';
+                } else {
+                    sorted.forEach((c, i) => {
+                        const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
+                        const rankClass = i === 0 ? 'first' : '';
+                        html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i+1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + ' <span class="result-symbol-name">(' + c.symbolName + ')</span></div><div class="result-dept">' + c.department + '</div><div class="result-progress"><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
+                    });
+                }
+            }
+            
+            document.getElementById('results-container').innerHTML = html;
+        }
+
+        function logout() { localStorage.removeItem('currentUser'); window.location.href = '/login.html'; }
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        checkAuth();
+        renderResults();
+        setInterval(renderResults, 5000);
+    </script>
+</body>
+</html>

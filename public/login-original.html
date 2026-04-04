@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ICE Voting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <a href="index.html" class="logo" style="justify-content: center; margin-bottom: 1rem;">
+                        <span class="logo-icon">🗳️</span>
+                        <span class="logo-text">ICE Voting</span>
+                    </a>
+                    <h1>Imperial College of Engineering</h1>
+                    <p style="color: var(--accent);">College President Election 2026</p>
+                    <p style="margin-top: 1rem;">Login to cast your vote</p>
+                </div>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="email" class="form-input" placeholder="Enter your email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        Login
+                    </button>
+                </form>
+
+                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0, 217, 165, 0.1); border: 1px solid var(--success); border-radius: var(--radius-md); text-align: center;">
+                    <p style="color: var(--success); font-size: 0.9rem; margin: 0;">
+                        🗳️ <strong>Voter Password:</strong> voter123
+                    </p>
+                </div>
+
+                <div style="margin-top: 1rem; text-align: center;">
+                    <a href="admin-login.html" style="color: var(--text-secondary); font-size: 0.85rem;">
+                        👑 Admin Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.toLowerCase().trim();
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            
+            // Admin login
+            if (email === 'admin@ice.edu' && password === 'admin2026') {
+                const user = { id: 1, name: 'Administrator', email: email, role: 'admin' };
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'admin-dashboard.html';
+                return;
+            }
+            
+            // Voter login
+            if (password === 'voter123') {
+                const allVotes = JSON.parse(localStorage.getItem('votes') || '[]');
+                const existingVote = allVotes.find(v => v.userEmail === email);
+                
+                const user = {
+                    id: Date.now(),
+                    name: email.split('@')[0],
+                    email: email,
+                    role: 'voter',
+                    hasVoted: !!existingVote,
+                    votedFor: existingVote ? existingVote.candidateSymbol + ' ' + existingVote.candidateName : null
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                window.location.href = 'vote.html';
+                return;
+            }
+            
+            alert('Invalid credentials. Voters use password: voter123');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - UniVote</title>
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition); }
+
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 2.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .logo i { font-size: 1.75rem; }
+
+        .login-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .login-header p {
+            font-size: 0.875rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .login-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .form-group { margin-bottom: 1.25rem; }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .admin-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            color: white;
+        }
+
+        .back-link {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .back-link a:hover { color: var(--primary); }
+
+        .credentials-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .credentials-box p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .credentials-box code {
+            background: var(--surface);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 1rem; }
+            .login-card { padding: 1.5rem; }
+        }
+
+        /* Password Toggle Styles */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-wrapper .form-input {
+            padding-right: 3rem;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1rem;
+            transition: var(--transition);
+            padding: 0;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+
+        .password-toggle i {
+            display: block;
+        }
+
+        .password-toggle .fa-eye-slash {
+            display: none;
+        }
+
+        .password-toggle.active .fa-eye {
+            display: none;
+        }
+
+        .password-toggle.active .fa-eye-slash {
+            display: block;
+        }
+        
+        /* Error message styles */
+        .error-message {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="admin-icon">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <a href="index.html" class="logo">
+                    <i class="fas fa-vote-yea"></i>
+                    <span>UniVote</span>
+                </a>
+                <h1>Admin Login</h1>
+                <p>For Administrators Only</p>
+                <p class="login-subtitle">Access the election management dashboard</p>
+            </div>
+
+            <form id="admin-login-form">
+                <div class="form-group">
+                    <label class="form-label">Admin Email</label>
+                    <input type="email" id="admin-email" class="form-input" placeholder="Enter admin email" required>
+                    <div id="email-error" class="error-message"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Admin Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="admin-password" class="form-input" placeholder="Enter admin password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('admin-password', this)">
+                            <i class="fas fa-eye"></i>
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <div id="password-error" class="error-message"></div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Admin Login
+                </button>
+            </form>
+
+            <div class="back-link">
+                <a href="login.html">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Voter Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.classList.add('active');
+            } else {
+                input.type = 'password';
+                btn.classList.remove('active');
+            }
+        }
+        
+        function showError(elementId, message) {
+            var errorDiv = document.getElementById(elementId);
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+        
+        function hideError(elementId) {
+            var errorDiv = document.getElementById(elementId);
+            errorDiv.classList.remove('show');
+        }
+
+        document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('admin-email').value.trim();
+            const password = document.getElementById('admin-password').value;
+            const submitBtn = this.querySelector('button[type="submit"]');
+            
+            // Clear previous errors
+            hideError('email-error');
+            hideError('password-error');
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            
+            try {
+                // First check if it's the hardcoded admin (for backward compatibility)
+                if (email === 'admin@ice.edu' && password === 'admin2026') {
+                    const user = {
+                        id: 1,
+                        name: 'Administrator',
+                        email: email,
+                        role: 'admin'
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    window.location.href = 'admin-dashboard.html';
+                    return;
+                }
+                
+                // Authenticate directly with Firebase Auth (not using AuthService.login)
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Check if user has admin role by looking in 'Administration/admin' node
+                const userSnapshot = await firebase.database().ref('Administration/admin').once('value');
+                const userData = userSnapshot.val();
+                
+                if (userData && userData.role === 'admin' && userData.uid === user.uid) {
+                    const adminUser = {
+                        uid: user.uid,
+                        email: user.email,
+                        name: userData.name || 'Administration',
+                        role: 'admin'
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(adminUser));
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    // Sign out if not admin
+                    await firebase.auth().signOut();
+                    showError('email-error', 'Access denied. Admin privileges required.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Admin Login';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                // Handle specific Firebase Auth errors
+                if (error.code === 'auth/user-not-found') {
+                    showError('email-error', 'No admin account found with this email.');
+                } else if (error.code === 'auth/wrong-password') {
+                    showError('password-error', 'Incorrect password. Please try again.');
+                } else if (error.code === 'auth/invalid-email') {
+                    showError('email-error', 'Invalid email address format.');
+                } else if (error.code === 'auth/too-many-requests') {
+                    showError('email-error', 'Too many failed attempts. Please try again later.');
+                } else {
+                    showError('email-error', 'Login failed: ' + error.message);
+                }
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Admin Login';
+            }
+        });
+    </script>
+</body>
+</html>

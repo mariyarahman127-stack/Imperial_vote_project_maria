@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Imperial College of Engineering</title>
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    
+    <style>
+        /* =====================================================
+           Modern Voter Dashboard - Clean Blue/White/Gray Theme
+           ===================================================== */
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition); }
+
+        /* =====================================================
+           Layout
+           ===================================================== */
+        
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo i { font-size: 1.75rem; }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface-alt);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-details h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-logout:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        /* Dashboard Header */
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value.success { color: var(--success); }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        /* Vote Status - Not Voted */
+        .vote-status {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .vote-status-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+
+        .vote-status h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .vote-status p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Vote Status - Voted */
+        .vote-status.voted .vote-status-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .voted-candidate {
+            margin: 1.5rem 0;
+        }
+
+        .voted-symbol {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .voted-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .voted-dept {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .vote-receipt {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: var(--radius-md);
+            margin-top: 1.5rem;
+        }
+
+        .vote-receipt-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .vote-receipt-id {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: transparent;
+            color: var(--primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+            .action-buttons .btn-primary,
+            .action-buttons .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="logo">
+                    <i class="fas fa-vote-yea"></i>
+                    <span>UniVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="voter-dashboard.html" class="nav-item active">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="voter-elections.html" class="nav-item">
+                    <i class="fas fa-election"></i>
+                    <span>Elections</span>
+                </a>
+                <a href="vote.html?id=1" class="nav-item" id="cast-vote-link" style="display: none;">
+                    <i class="fas fa-vote-yea"></i>
+                    <span>Cast Vote</span>
+                </a>
+                <a href="results.html?id=1" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Results</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">JD</div>
+                    <div class="user-details">
+                        <h4 id="user-name">John Doe</h4>
+                        <p>Voter</p>
+                    </div>
+                </div>
+                <button class="btn-logout" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title" id="welcome-message">Welcome back! 👋</h1>
+                <p class="dashboard-subtitle">Imperial College of Engineering - Voting System</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" id="vote-status-icon">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="stat-value" id="vote-action-value">Vote</div>
+                    <div class="stat-label">Cast Your Vote</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Candidates</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value">500</div>
+                    <div class="stat-label">Total Voters</div>
+                </div>
+            </div>
+
+            <!-- Main Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <i class="fas fa-vote-yea" style="color: var(--primary); font-size: 1.25rem;"></i>
+                    <h3>Cast Your Vote</h3>
+                </div>
+                <div class="card-body">
+                    <div id="election-status"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const election = {
+            id: 1,
+            title: 'President Election 2026',
+            candidates: [
+                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖' },
+                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹' },
+                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️' },
+                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭' },
+                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜' },
+            ]
+        };
+        
+        async function checkServerVoteStatus(identifier) {
+            try {
+                // Check if identifier is studentId or email
+                let studentId = identifier;
+                if (identifier.includes('@')) {
+                    studentId = identifier.split('@')[0];
+                }
+                const response = await fetch('/api/check-vote-by-student/' + encodeURIComponent(studentId));
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error checking vote status:', error);
+                return { hasVoted: false };
+            }
+        }
+        
+        async function hasVoted() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) return false;
+            const user = JSON.parse(stored);
+            
+            // Check using studentId if available
+            if (user.studentId) {
+                const serverStatus = await checkServerVoteStatus(user.studentId);
+                if (serverStatus.hasVoted) return true;
+            }
+            
+            // Fallback to email check
+            if (!user.email) return false;
+            
+            // Check localStorage first
+            const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+            const userEmail = user.email.toLowerCase();
+            if (votes.some(v => (v.userEmail && v.userEmail.toLowerCase()) === userEmail)) {
+                return true;
+            }
+            
+            // Check server/Firebase
+            const serverStatus = await checkServerVoteStatus(user.email);
+            if (serverStatus.hasVoted) return true;
+            
+            return false;
+        }
+        
+        async function getUserVote() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) return null;
+            const user = JSON.parse(stored);
+            if (!user.email) return null;
+            
+            // Check Firebase first for cross-device support
+            const serverStatus = await checkServerVoteStatus(user.email);
+            if (serverStatus.hasVoted && serverStatus.votedFor) {
+                const votedFor = serverStatus.votedFor;
+                const match = votedFor.match(/^([^\s]+)\s+(.+)$/);
+                if (match) {
+                    return {
+                        candidateSymbol: match[1],
+                        candidateName: match[2],
+                        candidateDepartment: 'Lecturer, CSE Department'
+                    };
+                }
+                return { candidateName: votedFor };
+            }
+            
+            // Check localStorage
+            const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+            const userEmail = user.email.toLowerCase();
+            const localVote = votes.find(v => (v.userEmail && v.userEmail.toLowerCase()) === userEmail);
+            
+            return localVote || null;
+        }
+        
+        function getUserVoteId() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) return null;
+            const user = JSON.parse(stored);
+            if (user.voteId) return user.voteId;
+            
+            const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+            const userEmail = user.email ? user.email.toLowerCase() : null;
+            if (!userEmail) return null;
+            const userVote = votes.find(v => (v.userEmail && v.userEmail.toLowerCase()) === userEmail);
+            return userVote ? userVote.id : null;
+        }
+        
+        // Load voting schedule from Firebase
+        async function loadVotingSchedule() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
+                    const schedule = snapshot.val();
+                    console.log('Voting schedule loaded from Firebase:', schedule);
+                    
+                    // If Firebase returns null, clear localStorage to prevent stale data
+                    if (!schedule) {
+                        console.log('Firebase returned null, clearing localStorage to prevent stale data');
+                        localStorage.removeItem('votingSchedule');
+                        return null;
+                    }
+                    
+                    localStorage.setItem('votingSchedule', JSON.stringify(schedule));
+                    return schedule;
+                }
+                
+                // Fallback to localStorage ONLY if Firebase is not available
+                const localSchedule = localStorage.getItem('votingSchedule');
+                if (localSchedule) {
+                    console.log('Voting schedule loaded from localStorage (Firebase not available):', localSchedule);
+                    return JSON.parse(localSchedule);
+                }
+            } catch (error) {
+                console.error('Error loading voting schedule:', error);
+            }
+            return null;
+        }
+        
+        // Check if voting is currently allowed
+        function isVotingAllowed(schedule) {
+            if (!schedule) {
+                return { allowed: false, message: 'Voting schedule not available. Please contact administrator.' };
+            }
+            
+            const now = Date.now();
+            const startTime = schedule.startTime;
+            const endTime = schedule.endTime;
+            
+            console.log('Current time (UTC):', new Date(now).toISOString());
+            console.log('Current time (local):', new Date(now).toLocaleString());
+            console.log('Start time (UTC):', new Date(startTime).toISOString());
+            console.log('Start time (local):', new Date(startTime).toLocaleString());
+            console.log('End time (UTC):', new Date(endTime).toISOString());
+            console.log('End time (local):', new Date(endTime).toLocaleString());
+            console.log('Now < startTime:', now < startTime);
+            console.log('Now > endTime:', now > endTime);
+            
+            if (now < startTime) {
+                const timeUntilStart = startTime - now;
+                const hours = Math.floor(timeUntilStart / (1000 * 60 * 60));
+                const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+                return {
+                    allowed: false,
+                    message: `Voting has not started yet. Voting begins in ${hours}h ${minutes}m.`,
+                    startTime: startTime,
+                    endTime: endTime
+                };
+            }
+            
+            if (now > endTime) {
+                return {
+                    allowed: false,
+                    message: 'Voting has ended.',
+                    startTime: startTime,
+                    endTime: endTime
+                };
+            }
+            
+            const timeUntilEnd = endTime - now;
+            const hours = Math.floor(timeUntilEnd / (1000 * 60 * 60));
+            const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+            return {
+                allowed: true,
+                message: `Voting is active. Time remaining: ${hours}h ${minutes}m`,
+                startTime: startTime,
+                endTime: endTime
+            };
+        }
+        
+        async function renderDashboard() {
+            const stored = localStorage.getItem('currentUser');
+            if (stored) {
+                const user = JSON.parse(stored);
+                document.getElementById('user-name').textContent = user.name;
+                document.getElementById('user-avatar').textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                document.getElementById('welcome-message').textContent = `Welcome back, ${user.name.split(' ')[0]}! 👋`;
+            }
+            
+            const voted = await hasVoted();
+            const userVote = await getUserVote();
+            const voteId = getUserVoteId();
+            
+            const voteActionValue = document.getElementById('vote-action-value');
+            const voteStatusIcon = document.getElementById('vote-status-icon');
+            
+            if (voted) {
+                voteActionValue.textContent = 'Voted';
+                voteActionValue.classList.add('success');
+                voteStatusIcon.classList.add('success');
+                voteStatusIcon.innerHTML = '<i class="fas fa-check"></i>';
+            } else {
+                voteActionValue.textContent = 'Vote';
+                voteStatusIcon.innerHTML = '<i class="fas fa-vote-yea"></i>';
+            }
+            
+            const statusContainer = document.getElementById('election-status');
+            
+            if (voted && userVote) {
+                const symbol = userVote.candidateSymbol || '✓';
+                const name = userVote.candidateName || 'Unknown Candidate';
+                const department = userVote.candidateDepartment || '';
+                
+                statusContainer.innerHTML = `
+                    <div class="vote-status voted">
+                        <div class="vote-status-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4>You Have Voted!</h4>
+                        <p>Your vote has been recorded for:</p>
+                        <div class="voted-candidate">
+                            <div class="voted-symbol">${symbol}</div>
+                            <div class="voted-name">${name}</div>
+                            <div class="voted-dept">${department}</div>
+                        </div>
+                        <div class="vote-receipt">
+                            <div class="vote-receipt-label">VOTE RECEIPT ID</div>
+                            <div class="vote-receipt-id">#${voteId || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Load voting schedule and check if voting is allowed
+                const schedule = await loadVotingSchedule();
+                
+                // CRITICAL: Check if schedule is null FIRST before any other checks
+                if (!schedule) {
+                    console.error('Voting schedule is null or undefined!');
+                    statusContainer.innerHTML = `
+                        <div class="vote-status">
+                            <div class="vote-status-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--danger);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <h4>Configuration Error</h4>
+                            <p style="color: var(--text-secondary);">Voting schedule is not configured. Please contact administrator.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const votingStatus = isVotingAllowed(schedule);
+                
+                // Show/hide the Cast Vote sidebar link based on voting status
+                const castVoteLink = document.getElementById('cast-vote-link');
+                if (castVoteLink) {
+                    castVoteLink.style.display = votingStatus.allowed ? 'flex' : 'none';
+                }
+                
+                if (votingStatus.allowed) {
+                    statusContainer.innerHTML = `
+                        <div class="vote-status">
+                            <div class="vote-status-icon">
+                                <i class="fas fa-vote-yea"></i>
+                            </div>
+                            <h4>Vote for President</h4>
+                            <p>5 candidates are running for President</p>
+                            <div class="action-buttons">
+                                <a href="vote.html?id=1" class="btn-primary">
+                                    <i class="fas fa-vote-yea"></i>
+                                    Cast Your Vote Now
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    statusContainer.innerHTML = `
+                        <div class="vote-status">
+                            <div class="vote-status-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h4>Voting Not Available</h4>
+                            <p style="color: var(--text-secondary);">${votingStatus.message}</p>
+                            ${votingStatus.startTime ? `<p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Scheduled: ${new Date(votingStatus.startTime).toLocaleString()} - ${new Date(votingStatus.endTime).toLocaleString()}</p>` : ''}
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            renderDashboard();
+            
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                });
+            }
+
+            // Intercept Results link in sidebar to show message
+            const resultsLinks = document.querySelectorAll('a[href*="results.html"]');
+            resultsLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showResultsNotAvailable();
+                });
+            });
+        });
+
+        function showResultsNotAvailable() {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'results-modal-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                backdrop-filter: blur(4px);
+            `;
+
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                max-width: 420px;
+                width: 90%;
+                padding: 2rem;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            `;
+
+            modal.innerHTML = `
+                <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 1.5rem;">Results Not Available</h2>
+                <p style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Only administrators can view election results.</p>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Results will be published after the election ends</p>
+                <button onclick="closeResultsModal()" style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.5rem;
+                    background: #2563eb;
+                    color: white;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    border-radius: 12px;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">OK</button>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeResultsModal();
+                }
+            });
+        }
+
+        function closeResultsModal() {
+            const overlay = document.getElementById('results-modal-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+    </script>
+</body>
+</html>
+

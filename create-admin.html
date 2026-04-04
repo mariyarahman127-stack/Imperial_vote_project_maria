@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Admin User - UniVote</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .info {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #0369a1;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd6;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        .message.success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .message.error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 45px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 18px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .password-toggle:hover {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Create Admin User</h1>
+        
+        <div class="info">
+            <strong>ℹ️ About this page:</strong><br>
+            This page creates an admin user in Firebase Realtime Database with admin privileges.
+            Use this to set up your first admin account for Firebase authentication.
+        </div>
+
+        <form id="admin-form">
+            <div class="form-group">
+                <label for="email">Admin Email</label>
+                <input type="email" id="email" value="admin@ice.edu" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Admin Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" value="admin2026" required>
+                    <button type="button" class="password-toggle" id="password-toggle">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="name">Admin Name</label>
+                <input type="text" id="name" value="Administrator" required>
+            </div>
+            
+            <button type="submit" class="btn" id="submit-btn">
+                <i class="fas fa-user-shield"></i> Create Admin User
+            </button>
+        </form>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // Password toggle functionality
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.getElementById('password-toggle');
+        
+        passwordToggle.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle eye icon
+            const icon = this.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        });
+
+        document.getElementById('admin-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value.trim();
+            const submitBtn = document.getElementById('submit-btn');
+            const messageDiv = document.getElementById('message');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Admin...';
+            
+            try {
+                // First, try to create the user in Firebase Auth
+                let user;
+                try {
+                    const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                    user = userCredential.user;
+                    console.log('User created in Firebase Auth:', user.uid);
+                } catch (authError) {
+                    if (authError.code === 'auth/email-already-in-use') {
+                        // User already exists, try to sign in
+                        console.log('User already exists, signing in...');
+                        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                        user = userCredential.user;
+                        console.log('Signed in as existing user:', user.uid);
+                    } else {
+                        throw authError;
+                    }
+                }
+                
+                // Update user profile with name
+                await user.updateProfile({
+                    displayName: name
+                });
+                
+                // Save admin user data to database under 'Administration' node
+                // Use 'admin' as the key instead of UID
+                await firebase.database().ref('Administration/admin').set({
+                    uid: user.uid,
+                    email: email.toLowerCase(),
+                    name: 'Administration',
+                    role: 'admin',
+                    hasVoted: false,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                console.log('Admin user data saved to database under Administration/admin');
+                
+                // Show success message
+                messageDiv.className = 'message success';
+                messageDiv.innerHTML = `
+                    <strong>✅ Admin user created successfully!</strong><br><br>
+                    <strong>User ID:</strong> ${user.uid}<br>
+                    <strong>Email:</strong> ${email}<br>
+                    <strong>Name:</strong> Administration<br>
+                    <strong>Role:</strong> admin<br><br>
+                    You can now login at <a href="admin-login.html" style="color: #065f46; font-weight: bold;">admin-login.html</a>
+                `;
+                messageDiv.style.display = 'block';
+                
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Admin Created!';
+                
+            } catch (error) {
+                console.error('Error creating admin:', error);
+                messageDiv.className = 'message error';
+                messageDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+                messageDiv.style.display = 'block';
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-shield"></i> Create Admin User';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - ICE Voting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <style>
+        .result-symbol {
+            width: 60px;
+            height: 60px;
+            margin-right: 1rem;
+            background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(255, 107, 107, 0.1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 2px solid var(--accent);
+            flex-shrink: 0;
+        }
+        .result-symbol-name {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(233, 69, 96, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 0.25rem;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+        .result-rank {
+            width: 30px;
+            height: 30px;
+            background: var(--gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .result-info {
+            flex: 1;
+        }
+        .result-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .result-dept {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        .result-votes {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-right: 1rem;
+        }
+        .result-percentage {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 60px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div style="min-height: 100vh; padding: 2rem;">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+                    <span style="color: #e94560;">Imperial College of Engineering</span>
+                </h1>
+                <p style="color: var(--accent); font-size: 1.2rem;">College President Election 2026</p>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">📊 Live Results (Admin Only)</p>
+            </div>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-voters">500</div>
+                    <div class="stat-label">Total Voters</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="votes-cast">0</div>
+                    <div class="stat-label">Votes Cast</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="turnout">0%</div>
+                    <div class="stat-label">Turnout</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div class="card-header">
+                    <h3 class="card-title">📊 Election Results</h3>
+                    <button class="btn btn-outline" onclick="renderResults()" style="padding: 0.5rem 1rem;">🔄 Refresh</button>
+                </div>
+                <div class="card-body">
+                    <div id="results-container"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Voting Records (Email + Symbol + Name + Department)</h3>
+                    <button class="btn btn-outline" onclick="clearAllVotes()" style="padding: 0.5rem 1rem; color: #e94560; border-color: #e94560;">🗑️ Reset All Votes</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Email</th>
+                                    <th>Symbol</th>
+                                    <th>Symbol Name</th>
+                                    <th>Candidate</th>
+                                    <th>Department</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="voting-records"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-outline" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const totalVoters = 500;
+        let allVotes = [];
+        let resultsData = null;
+
+        // Load results from SERVER API (not Firebase/localStorage)
+        async function loadResults() {
+            try {
+                // Get results from server
+                const response = await fetch('/api/results');
+                if (response.ok) {
+                    resultsData = await response.json();
+                }
+                
+                // Get all votes from server for voting records
+                const votesResponse = await fetch('/api/admin/votes');
+                if (votesResponse.ok) {
+                    allVotes = await votesResponse.json();
+                }
+            } catch (error) {
+                console.error('Error loading from server:', error);
+                resultsData = { candidates: [], totalVotes: 0 };
+                allVotes = [];
+            }
+        }
+
+        async function renderResults() {
+            await loadResults();
+            
+            const totalVotes = resultsData.totalVotes;
+            const sorted = resultsData.candidates.sort((a, b) => b.votes - a.votes);
+
+            // Update stats
+            document.getElementById('votes-cast').textContent = totalVotes;
+            document.getElementById('turnout').textContent = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 100) + '%' : '0%';
+
+            // Render results
+            let html = '';
+            sorted.forEach((c, i) => {
+                const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
+                html += `
+                    <div class="result-item">
+                        <div class="result-rank">${i + 1}</div>
+                        <div class="result-symbol">${c.symbol}</div>
+                        <div class="result-info">
+                            <h4>${c.name} <span class="result-symbol-name">${c.symbolName}</span></h4>
+                            <div class="result-dept">${c.department}</div>
+                            <div class="progress-bar" style="margin-top: 0.5rem;">
+                                <div class="progress-fill" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                        <div class="result-votes">${c.votes} votes</div>
+                        <div class="result-percentage">${pct}%</div>
+                    </div>
+                `;
+            });
+            
+            if (sorted.length === 0) {
+                html = '<p style="text-align: center; color: var(--text-muted);">No votes yet</p>';
+            }
+            
+            document.getElementById('results-container').innerHTML = html;
+
+            // Render voting records with ALL details
+            let recordsHtml = '';
+            allVotes.forEach((v, i) => {
+                const timestamp = v.timestampRaw || v.timestamp || Date.now();
+                const date = new Date(timestamp);
+                const time = date.toLocaleTimeString();
+                const day = date.toLocaleDateString();
+                
+                recordsHtml += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${v.userEmail || 'N/A'}</td>
+                        <td style="font-size: 1.5rem;">${v.candidateSymbol || ''}</td>
+                        <td><span class="result-symbol-name">${v.candidateSymbolName || 'N/A'}</span></td>
+                        <td>${v.candidateName || 'N/A'}</td>
+                        <td>${v.candidateDepartment || 'N/A'}</td>
+                        <td>${time} (${day})</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('voting-records').innerHTML = recordsHtml || '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No votes yet</td></tr>';
+        }
+
+        async function clearAllVotes() {
+            if (confirm('Are you sure you want to reset all votes? This action cannot be undone.')) {
+                try {
+                    console.log('Starting to clear all votes...');
+                    
+                    const response = await fetch('/api/admin/reset-votes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adminKey: 'admin2026' })
+                    });
+                    
+                    const responseData = await response.json();
+                    console.log('Server response:', responseData);
+                    
+                    if (response.ok) {
+                        // Clear the allVotes array to ensure dashboard is reset
+                        allVotes = [];
+                        resultsData = { candidates: [], totalVotes: 0 };
+                        
+                        alert('All votes have been reset!');
+                        // Force a fresh load from server with delay to ensure cache is cleared
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        await renderResults();
+                    } else {
+                        console.error('Server error:', responseData);
+                        alert('Error clearing votes: ' + (responseData.message || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error clearing votes:', error);
+                    alert('Error clearing votes: ' + error.message);
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        function checkAdminAuth() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) {
+                window.location.href = 'login.html';
+                return;
+            }
+            const user = JSON.parse(stored);
+            if (user.role !== 'admin') {
+                alert('Access denied. Admin only.');
+                window.location.href = 'login.html';
+            }
+        }
+
+        checkAdminAuth();
+        renderResults();
+        // Auto-refresh every 5 seconds to sync with database changes
+        setInterval(renderResults, 5000);
+    </script>
+</body>
+</html>

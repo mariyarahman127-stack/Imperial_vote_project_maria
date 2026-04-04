@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Imperial College of Engineering</title>
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
+    <script src="js/firebase-service.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; transition: var(--transition); }
+
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header { margin-bottom: 2rem; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo i { font-size: 1.75rem; }
+
+        .sidebar-nav { flex: 1; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface-alt);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-details h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.75rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-logout:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 2rem;
+        }
+
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .dashboard-subtitle {\n            color: var(--text-secondary);\n            font-size: 0.95rem;\n            animation: pulse 2s ease-in-out infinite;\n        }\n\n        @keyframes pulse {\n            0%, 100% {\n                opacity: 1;\n                transform: scale(1);\n            }\n            50% {\n                opacity: 0.7;\n                transform: scale(1.02);\n            }\n        }
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value.success { color: var(--success); }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .main-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .results-container {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--surface-alt);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+        }
+
+        .result-rank {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .result-rank.first {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .result-symbol {
+            font-size: 2rem;
+        }
+
+        .result-info {
+            flex: 1;
+        }
+
+        .result-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-symbol-name {
+            color: #10b981;
+            font-size: 0.875rem;
+        }
+
+        .result-dept {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .result-stats {
+            text-align: right;
+        }
+
+        .result-votes {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .result-percentage {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--surface-alt);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        td {
+            font-size: 0.9rem;
+        }
+
+        .vote-id {
+            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #00ffff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="logo">
+                    <i class="fas fa-vote-yea"></i>
+                    <span>UniVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="admin-dashboard.html" class="nav-item active">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4 id="user-name">Administrator</h4>
+                        <p>Admin</p>
+                    </div>
+                </div>
+                <button class="btn-logout" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Admin Dashboard</h1>
+                <p class="dashboard-subtitle" style="color: #10b981;">Imperial College of Engineering - Election Management</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="stat-value" id="votes-cast">0</div>
+                    <div class="stat-label">Votes Cast</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-value success" id="turnout">0%</div>
+                    <div class="stat-label">Voter Turnout</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Candidates</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon danger">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value" id="total-voters">500</div>
+                    <div class="stat-label">Total Voters</div>
+                </div>
+            </div>
+
+            <!-- Voting Schedule Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-calendar-alt" style="color: var(--primary);"></i>
+                        Voting Schedule
+                    </h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-primary" id="save-schedule-btn">
+                            <i class="fas fa-save"></i> Save Schedule
+                        </button>
+                        <button class="btn-danger" id="clear-schedule-btn">
+                            <i class="fas fa-trash"></i> Clear Schedule
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-play-circle" style="color: var(--success);"></i> Voting Start Date & Time
+                            </label>
+                            <input type="datetime-local" id="schedule-start" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-stop-circle" style="color: var(--danger);"></i> Voting End Date & Time
+                            </label>
+                            <input type="datetime-local" id="schedule-end" class="form-input">
+                        </div>
+                    </div>
+                    <div id="schedule-status" style="margin-top: 1rem; padding: 1rem; background: var(--surface-alt); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i> Set the voting schedule. Students will only be able to vote during the scheduled period.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-chart-bar" style="color: var(--primary);"></i>
+                        Election Results
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="results-container" id="results-container">
+                        <!-- Results will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voting Records Card -->
+            <div class="main-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-list-alt" style="color: var(--primary);"></i>
+                        Voting Records
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Voter Email</th>
+                                    <th>Symbol</th>
+                                    <th>Symbol Name</th>
+                                    <th>Candidate</th>
+                                    <th>Department</th>
+                                    <th>Time</th>
+                                    <th>Receipt ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="voting-records">
+                                <!-- Records will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let allVotes = [];
+        let totalVoters = 500;
+        let resultsData = { candidates: [], totalVotes: 0 };
+        let votesListenerActive = false;
+
+        const election = {
+            id: 1,
+            title: 'President Election 2026',
+            candidates: [
+                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
+                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
+                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
+                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
+                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' },
+            ]
+        };
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Firebase to initialize
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // First check if it's hardcoded admin in localStorage
+            const stored = localStorage.getItem('currentUser');
+            if (stored) {
+                const userData = JSON.parse(stored);
+                if (userData.role === 'admin' && userData.email === 'admin@ice.edu') {
+                    // Hardcoded admin - allow access without Firebase authentication
+                    console.log('Hardcoded admin detected, allowing access');
+                    renderResults();
+                    return;
+                }
+            }
+            
+            // Check if user is authenticated with Firebase
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().onAuthStateChanged(async function(user) {
+                    if (!user) {
+                        // User is not authenticated, redirect to login
+                        console.log('User not authenticated, redirecting to login');
+                        localStorage.removeItem('currentUser');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    // Check if user has admin role by looking in 'Administration/admin' node
+                    const userSnapshot = await firebase.database().ref('Administration/admin').once('value');
+                    const userData = userSnapshot.val();
+                    
+                    if (userData && userData.role === 'admin' && userData.uid === user.uid) {
+                        // User is authenticated and is admin, proceed with dashboard
+                        console.log('Admin authenticated:', user.email);
+                        renderResults();
+                    } else {
+                        alert('Access denied. Admin privileges required.');
+                        localStorage.removeItem('currentUser');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                });
+            } else {
+                // Fallback to localStorage check
+                if (!stored) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const user = JSON.parse(stored);
+                if (user.role !== 'admin') {
+                    alert('Access denied. Admin only.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                renderResults();
+            }
+            
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    localStorage.removeItem('currentUser');
+                    window.location.href = '/index.html';
+                });
+            }
+            
+            const resetBtn = document.getElementById('reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', clearAllVotes);
+            }
+            
+            // Setup real-time listener for automatic updates
+            setupRealtimeListener();
+        });
+
+        function calculateResults(votes) {
+            const results = {};
+            election.candidates.forEach(c => {
+                results[c.id] = {
+                    id: c.id,
+                    name: c.name,
+                    department: c.department,
+                    symbol: c.symbol,
+                    symbolName: c.symbolName,
+                    votes: 0
+                };
+            });
+
+            votes.forEach(v => {
+                if (v.candidateId && results[v.candidateId]) {
+                    results[v.candidateId].votes++;
+                }
+            });
+
+            return {
+                candidates: Object.values(results),
+                totalVotes: votes.length
+            };
+        }
+
+        async function loadResults() {
+            // First try to load from Firebase using FirebaseService
+            if (typeof FirebaseService !== 'undefined') {
+                try {
+                    const votes = await FirebaseService.getAllVotes();
+                    if (votes && Array.isArray(votes)) {
+                        allVotes = votes;
+                        console.log('Loaded from Firebase:', allVotes.length);
+                        // Clear localStorage to sync with Firebase
+                        localStorage.setItem('votes', JSON.stringify(allVotes));
+                        return;
+                    }
+                } catch(e) {
+                    console.log('FirebaseService load error:', e);
+                }
+            }
+            
+            // Fallback: try Firebase SDK directly
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    if (firebase.apps.length === 0) {
+                        firebase.initializeApp({
+                            apiKey: "AIzaSyA6wYd8QJ_fRpi4jFT9PAEsdj7sKZO7Fno",
+                            authDomain: "univote1-59bd1.firebaseapp.com",
+                            databaseURL: "https://univote1-59bd1-default-rtdb.asia-southeast1.firebasedatabase.app",
+                            projectId: "univote1-59bd1",
+                            storageBucket: "univote1-59bd1.firebasestorage.app",
+                            messagingSenderId: "171480179267",
+                            appId: "1:171480179267:web:9bab916dc182b643b9eaf6"
+                        });
+                    }
+                    
+                    const fbDb = firebase.database();
+                    const snapshot = await fbDb.ref('votes').once('value');
+                    const fbData = snapshot.val();
+                    if (fbData) {
+                        allVotes = Object.values(fbData);
+                        console.log('Loaded from Firebase SDK:', allVotes.length);
+                        // Clear localStorage to sync with Firebase
+                        localStorage.setItem('votes', JSON.stringify(allVotes));
+                        return;
+                    } else {
+                        // No votes in Firebase, clear localStorage
+                        allVotes = [];
+                        localStorage.removeItem('votes');
+                        return;
+                    }
+                }
+            } catch(e) {
+                console.log('Firebase SDK load error:', e);
+            }
+            
+            // Also check localStorage (only if Firebase is not available)
+            const localVotes = localStorage.getItem('votes');
+            if (localVotes) {
+                const localVotesArray = JSON.parse(localVotes);
+                if (allVotes.length === 0) {
+                    allVotes = localVotesArray;
+                } else {
+                    // Merge unique votes
+                    const existingIds = new Set(allVotes.map(v => v.id));
+                    localVotesArray.forEach(v => {
+                        if (!existingIds.has(v.id)) {
+                            allVotes.push(v);
+                        }
+                    });
+                }
+                console.log('Loaded from localStorage:', allVotes.length);
+            }
+        }
+
+        function setupRealtimeListener() {
+            if (votesListenerActive) {
+                console.log('Real-time listener already active');
+                return;
+            }
+            
+            if (typeof FirebaseService !== 'undefined') {
+                console.log('Setting up real-time listener for votes...');
+                FirebaseService.onVotesChange(function(votes) {
+                    console.log('Real-time update received:', votes.length, 'votes');
+                    allVotes = votes;
+                    // Sync localStorage with Firebase
+                    localStorage.setItem('votes', JSON.stringify(allVotes));
+                    updateDashboard();
+                });
+                votesListenerActive = true;
+            } else {
+                console.log('FirebaseService not available, using polling');
+                // Fallback to polling if FirebaseService is not available
+                setInterval(renderResults, 5000);
+            }
+        }
+
+        function updateDashboard() {
+            // Use Firebase votes for results
+            if (allVotes.length > 0) {
+                resultsData = calculateResults(allVotes);
+            } else {
+                // Fallback to localStorage
+                const localVotes = localStorage.getItem('votes');
+                if (localVotes) {
+                    const votes = JSON.parse(localVotes);
+                    resultsData = calculateResults(votes);
+                }
+            }
+            
+            const totalVotes = resultsData.totalVotes;
+            const sorted = resultsData.candidates.sort((a, b) => b.votes - a.votes);
+
+            document.getElementById('votes-cast').textContent = totalVotes;
+            document.getElementById('turnout').textContent = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 100) + '%' : '0%';
+
+            let html = '';
+            if (sorted.length === 0) {
+                html = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No votes yet</p>';
+            } else {
+                sorted.forEach((c, i) => {
+                    const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
+                    const rankClass = i === 0 ? 'first' : '';
+                    html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i + 1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + ' <span class="result-symbol-name">(' + c.symbolName + ')</span></div><div class="result-dept">' + c.department + '</div><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
+                });
+            }
+            document.getElementById('results-container').innerHTML = html;
+
+            let recordsHtml = '';
+            allVotes.forEach((v, i) => {
+                const timestamp = v.timestampRaw || v.timestamp || Date.now();
+                const date = new Date(timestamp);
+                const time = date.toLocaleTimeString();
+                const day = date.toLocaleDateString();
+                const voteReceiptId = v.id || 'N/A';
+                
+                recordsHtml += '<tr><td>' + (i + 1) + '</td><td>' + (v.userEmail || 'N/A') + '</td><td style="font-size: 1.25rem;">' + (v.candidateSymbol || '') + '</td><td><span class="result-symbol-name">' + (v.candidateSymbolName || 'N/A') + '</span></td><td>' + (v.candidateName || 'N/A') + '</td><td>' + (v.candidateDepartment || 'N/A') + '</td><td>' + time + ' (' + day + ')</td><td class="vote-id">#' + voteReceiptId + '</td></tr>';
+            });
+            document.getElementById('voting-records').innerHTML = recordsHtml || '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No votes yet</td></tr>';
+        }
+
+        async function renderResults() {
+            await loadResults();
+            updateDashboard();
+        }
+
+        async function clearAllVotes() {
+            if (confirm('Are you sure you want to reset all votes? This action cannot be undone.')) {
+                try {
+                    console.log('Starting to clear all votes...');
+                    
+                    // Clear localStorage votes
+                    localStorage.removeItem('votes');
+                    console.log('Cleared localStorage votes');
+                    
+                    // Clear Firebase votes
+                    if (typeof FirebaseService !== 'undefined') {
+                        await FirebaseService.clearAllVotes();
+                        console.log('Cleared Firebase votes');
+                    }
+                    
+                    // Clear votes from server API
+                    console.log('Calling server API to reset votes...');
+                    var apiBaseUrl = window.location.origin;
+                    const response = await fetch(apiBaseUrl + '/api/admin/reset-votes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ adminKey: 'admin2026' })
+                    });
+                    
+                    const responseData = await response.json();
+                    console.log('Server response:', responseData);
+                    
+                    if (response.ok) {
+                        console.log('Cleared server votes');
+                    } else {
+                        console.error('Server error:', responseData);
+                        alert('Error clearing votes: ' + (responseData.message || 'Unknown error'));
+                        return;
+                    }
+                    
+                    // Clear the allVotes array to ensure dashboard is reset
+                    allVotes = [];
+                    resultsData = { candidates: [], totalVotes: 0 };
+                    
+                    // Clear Firebase SDK cache by re-initializing
+                    if (typeof firebase !== 'undefined' && firebase.database) {
+                        try {
+                            // Go offline and back online to clear cache
+                            firebase.database().goOffline();
+                            firebase.database().goOnline();
+                            console.log('Firebase cache cleared');
+                        } catch (e) {
+                            console.log('Firebase cache clear error:', e);
+                        }
+                    }
+                    
+                    alert('All votes have been reset!');
+                    // Update dashboard immediately after reset
+                    updateDashboard();
+                } catch (error) {
+                    console.error('Error clearing votes:', error);
+                    alert('Error clearing votes: ' + error.message);
+                }
+            }
+        }
+
+        // Voting Schedule Management Functions
+        async function saveSchedule() {
+            const startTime = document.getElementById('schedule-start').value;
+            const endTime = document.getElementById('schedule-end').value;
+            
+            if (!startTime || !endTime) {
+                alert('Please select both start and end times');
+                return;
+            }
+            
+            if (new Date(startTime) >= new Date(endTime)) {
+                alert('End time must be after start time');
+                return;
+            }
+            
+            try {
+                // Convert datetime-local input to UTC timestamp
+                // datetime-local gives us a string like '2026-04-01T19:00' which is in local time
+                // We need to treat this as local time and convert to UTC milliseconds
+                const startDate = new Date(startTime);
+                const endDate = new Date(endTime);
+                
+                const scheduleData = {
+                    startTime: startDate.getTime(),
+                    endTime: endDate.getTime(),
+                    updatedAt: Date.now()
+                };
+                
+                // Save to Firebase
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    await firebase.database().ref('votingSchedule').set(scheduleData);
+                    console.log('Schedule saved to Firebase:', scheduleData);
+                    console.log('Start time (local):', startDate.toLocaleString());
+                    console.log('End time (local):', endDate.toLocaleString());
+                    console.log('Start time (UTC):', startDate.toISOString());
+                    console.log('End time (UTC):', endDate.toISOString());
+                }
+                
+                // Also save to localStorage as backup
+                localStorage.setItem('votingSchedule', JSON.stringify(scheduleData));
+                
+                updateScheduleStatus(scheduleData);
+                alert('Voting schedule saved successfully!');
+            } catch (error) {
+                console.error('Error saving schedule:', error);
+                alert('Error saving schedule. Please try again.');
+            }
+        }
+
+        async function loadSchedule() {
+            try {
+                let scheduleData = null;
+                
+                // Try Firebase first
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
+                    scheduleData = snapshot.val();
+                    
+                    // If Firebase returns null, clear localStorage to prevent stale data
+                    if (!scheduleData) {
+                        console.log('Firebase returned null for votingSchedule, clearing localStorage');
+                        localStorage.removeItem('votingSchedule');
+                    }
+                }
+                
+                // Only fallback to localStorage if Firebase is not available
+                if (!scheduleData && typeof firebase === 'undefined') {
+                    const localSchedule = localStorage.getItem('votingSchedule');
+                    if (localSchedule) {
+                        scheduleData = JSON.parse(localSchedule);
+                        console.log('Loaded schedule from localStorage (Firebase not available):', scheduleData);
+                    }
+                }
+                
+                if (scheduleData) {
+                    // Populate the form fields
+                    const startDate = new Date(scheduleData.startTime);
+                    const endDate = new Date(scheduleData.endTime);
+                    
+                    document.getElementById('schedule-start').value = formatDateTimeLocal(startDate);
+                    document.getElementById('schedule-end').value = formatDateTimeLocal(endDate);
+                    
+                    updateScheduleStatus(scheduleData);
+                } else {
+                    // Clear form fields if no schedule
+                    document.getElementById('schedule-start').value = '';
+                    document.getElementById('schedule-end').value = '';
+                    
+                    const statusDiv = document.getElementById('schedule-status');
+                    statusDiv.innerHTML = `<p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;"><i class="fas fa-info-circle"></i> No voting schedule configured. Set the voting schedule above.</p>`;
+                    statusDiv.style.background = 'var(--surface-alt)';
+                    statusDiv.style.borderColor = 'var(--border)';
+                }
+            } catch (error) {
+                console.error('Error loading schedule:', error);
+            }
+        }
+        
+        async function clearSchedule() {
+            if (confirm('Are you sure you want to clear the voting schedule? This will remove the schedule from both Firebase and local storage.')) {
+                try {
+                    console.log('Clearing voting schedule...');
+                    
+                    // Clear from Firebase
+                    if (typeof firebase !== 'undefined' && firebase.database) {
+                        await firebase.database().ref('votingSchedule').remove();
+                        console.log('Cleared schedule from Firebase');
+                    }
+                    
+                    // Clear from localStorage
+                    localStorage.removeItem('votingSchedule');
+                    console.log('Cleared schedule from localStorage');
+                    
+                    // Clear form fields
+                    document.getElementById('schedule-start').value = '';
+                    document.getElementById('schedule-end').value = '';
+                    
+                    // Update status
+                    const statusDiv = document.getElementById('schedule-status');
+                    statusDiv.innerHTML = `<p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;"><i class="fas fa-info-circle"></i> Voting schedule has been cleared. Set a new schedule above.</p>`;
+                    statusDiv.style.background = 'var(--surface-alt)';
+                    statusDiv.style.borderColor = 'var(--border)';
+                    
+                    alert('Voting schedule has been cleared successfully!');
+                } catch (error) {
+                    console.error('Error clearing schedule:', error);
+                    alert('Error clearing schedule: ' + error.message);
+                }
+            }
+        }
+
+        function formatDateTimeLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        function updateScheduleStatus(scheduleData) {
+            const statusDiv = document.getElementById('schedule-status');
+            const now = Date.now();
+            const startTime = scheduleData.startTime;
+            const endTime = scheduleData.endTime;
+            
+            let statusHtml = '';
+            let statusClass = '';
+            
+            if (now < startTime) {
+                const timeUntilStart = startTime - now;
+                const hours = Math.floor(timeUntilStart / (1000 * 60 * 60));
+                const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+                statusHtml = `<i class="fas fa-clock" style="color: var(--warning);"></i> Voting starts in ${hours}h ${minutes}m`;
+                statusClass = 'warning';
+            } else if (now >= startTime && now <= endTime) {
+                const timeUntilEnd = endTime - now;
+                const hours = Math.floor(timeUntilEnd / (1000 * 60 * 60));
+                const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+                statusHtml = `<i class="fas fa-check-circle" style="color: var(--success);"></i> Voting is active! Ends in ${hours}h ${minutes}m`;
+                statusClass = 'success';
+            } else {
+                statusHtml = `<i class="fas fa-times-circle" style="color: var(--danger);"></i> Voting has ended`;
+                statusClass = 'danger';
+            }
+            
+            statusDiv.innerHTML = `<p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">${statusHtml}</p>`;
+            statusDiv.style.background = statusClass === 'success' ? 'rgba(16, 185, 129, 0.1)' : statusClass === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(220, 38, 38, 0.1)';
+            statusDiv.style.borderColor = statusClass === 'success' ? 'var(--success)' : statusClass === 'warning' ? 'var(--warning)' : 'var(--danger)';
+        }
+
+        // Initialize schedule management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load existing schedule
+            loadSchedule();
+            
+            // Add event listener for save button
+            const saveBtn = document.getElementById('save-schedule-btn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveSchedule);
+            }
+            
+            // Add event listener for clear button
+            const clearBtn = document.getElementById('clear-schedule-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearSchedule);
+            }
+        });
+    </script>
+</body>
+</html>

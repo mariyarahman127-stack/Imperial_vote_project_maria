@@ -1,0 +1,36 @@
+# UniVote Redirects
+
+# Login page
+/login /login.html 200
+/login.html /login.html 200
+
+# Vote page
+/vote /vote.html 200
+/vote.html /vote-with-animation.html 200
+
+# Results page
+/results /results.html 200
+/results.html /results.html 200
+
+# Admin pages
+/admin /admin-login.html 200
+/admin-login.html /admin-login.html 200
+/admin-dashboard /admin-dashboard.html 200
+/admin-dashboard.html /admin-dashboard.html 200
+
+# Voter dashboard
+/voter-dashboard /voter-dashboard.html 200
+/voter-dashboard.html /voter-dashboard.html 200
+
+# Vote success - DO NOT redirect this, it's the confirmation page
+/vote-success /vote-success.html 200
+/vote-success.html /vote-success.html 200
+
+# Vote link page
+/vote-link /vote-link.html 200
+/vote-link.html /vote-link.html 200
+
+# Home page
+/ /index.html 200
+/index /index.html 200
+

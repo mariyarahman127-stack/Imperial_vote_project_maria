@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote - ICE Voting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <style>
+        .candidate-card { cursor: pointer; transition: all 0.3s; }
+        .candidate-card:hover { transform: translateY(-5px); }
+        .candidate-card.disabled { opacity: 0.6; pointer-events: none; }
+        .loading { text-align: center; padding: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div class="auth-page" style="min-height: 100vh; padding-top: 2rem;">
+        <div class="auth-container" style="max-width: 900px;">
+            <div class="auth-card" style="padding: 2rem;">
+                <div class="auth-header">
+                    <a href="index.html" class="logo" style="justify-content: center; margin-bottom: 0.5rem;">
+                        <span class="logo-icon">🗳️</span>
+                        <span class="logo-text">ICE Voting</span>
+                    </a>
+                    <h1>College President Election 2026</h1>
+                    <p style="color: var(--accent); margin-top: 0.5rem;">Select your candidate</p>
+                    
+                    <div id="user-info" style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,217,165,0.1); border-radius: 8px; display: none;">
+                        <p style="color: var(--success); margin: 0; font-size: 0.9rem;">✓ Logged in as: <strong id="user-email"></strong></p>
+                    </div>
+                </div>
+
+                <div id="login-required" style="text-align: center; padding: 2rem;">
+                    <p style="color: var(--text-secondary);">Please login first to vote</p>
+                    <a href="login.html" class="btn btn-primary" style="margin-top: 1rem;">Go to Login</a>
+                </div>
+
+                <div id="already-voted" style="text-align: center; padding: 2rem; display: none;">
+                    <div style="font-size: 4rem;">✅</div>
+                    <h2 style="color: var(--success); margin-top: 1rem;">You Have Already Voted!</h2>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Your vote: <strong id="voted-for"></strong></p>
+                    <a href="results.html" class="btn btn-outline" style="margin-top: 1rem;">View Results</a>
+                </div>
+
+                <div id="candidates-section" style="display: none;">
+                    <div id="candidates-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+                        <!-- Candidates loaded via API -->
+                    </div>
+                    
+                    <div style="margin-top: 2rem; padding: 1rem; background: rgba(233,69,96,0.1); border-radius: 12px; text-align: center;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                            🔒 Your vote is secure and anonymous
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vote Confirmation Modal -->
+    <div class="modal-overlay" id="vote-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Your Vote</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div id="confirm-symbol" style="font-size: 4rem;"></div>
+                <h2 id="confirm-name" style="margin-top: 1rem;"></h2>
+                <p style="color: var(--text-secondary);">Are you sure?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" id="confirm-btn">Confirm Vote</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let currentUser = null;
+        let selectedCandidate = null;
+
+        // Check login
+        function checkLogin() {
+            const userData = localStorage.getItem('voterUser');
+            if (userData) {
+                currentUser = JSON.parse(userData);
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('user-email').textContent = currentUser.email;
+                document.getElementById('login-required').style.display = 'none';
+                checkIfVoted();
+            } else {
+                document.getElementById('login-required').style.display = 'block';
+            }
+        }
+
+        // Check if already voted
+        async function checkIfVoted() {
+            if (!currentUser) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/api/check-vote/${encodeURIComponent(currentUser.email)}`);
+                const data = await res.json();
+                
+                if (data.hasVoted) {
+                    document.getElementById('already-voted').style.display = 'block';
+                    document.getElementById('voted-for').textContent = data.votedFor;
+                    document.getElementById('candidates-section').style.display = 'none';
+                } else {
+                    loadCandidates();
+                }
+            } catch (err) {
+                console.error('Error checking vote:', err);
+                loadCandidates();
+            }
+        }
+
+        // Load candidates
+        async function loadCandidates() {
+            try {
+                const res = await fetch(`${API_URL}/api/candidates`);
+                const candidates = await res.json();
+                
+                const grid = document.getElementById('candidates-grid');
+                grid.innerHTML = candidates.map(c => `
+                    <div class="candidate-card" onclick="selectCandidate(${c.id}, '${c.symbol}', '${c.name}')" 
+                         style="background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 1.5rem; text-align: center;">
+                        <div style="font-size: 3rem;">${c.symbol}</div>
+                        <h3 style="margin-top: 0.5rem; font-size: 1rem;">${c.name}</h3>
+                        <div style="margin-top: 0.5rem; padding: 0.25rem 0.75rem; background: ${c.color}20; color: ${c.color}; border-radius: 20px; font-size: 0.8rem;">
+                            Click to vote
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('candidates-section').style.display = 'block';
+            } catch (err) {
+                console.error('Error loading candidates:', err);
+            }
+        }
+
+        // Select candidate
+        function selectCandidate(id, symbol, name) {
+            selectedCandidate = { id, symbol, name };
+            document.getElementById('confirm-symbol').textContent = symbol;
+            document.getElementById('confirm-name').textContent = name;
+            document.getElementById('vote-modal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('vote-modal').classList.remove('active');
+            selectedCandidate = null;
+        }
+
+        // Confirm vote
+        document.getElementById('confirm-btn').addEventListener('click', async () => {
+            if (!selectedCandidate || !currentUser) return;
+            
+            const btn = document.getElementById('confirm-btn');
+            btn.disabled = true;
+            btn.innerHTML = 'Voting...';
+            
+            try {
+                const res = await fetch(`${API_URL}/api/vote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        candidateId: selectedCandidate.id
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('✅ Vote cast successfully!');
+                    if (data.tie) {
+                        alert('⚠️ Note: The election is currently tied!');
+                    }
+                    window.location.href = 'results.html';
+                } else {
+                    alert('❌ ' + data.message);
+                    if (data.hasVoted) {
+                        window.location.reload();
+                    }
+                }
+            } catch (err) {
+                alert('Error casting vote. Please try again.');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = 'Confirm Vote';
+            closeModal();
+        });
+
+        // Initialize
+        checkLogin();
+
+        // Intercept View Results link to show message
+        document.addEventListener('DOMContentLoaded', function() {
+            const resultsLinks = document.querySelectorAll('a[href*="results.html"]');
+            resultsLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showResultsNotAvailable();
+                });
+            });
+        });
+
+        function showResultsNotAvailable() {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'results-modal-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                backdrop-filter: blur(4px);
+            `;
+
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                max-width: 420px;
+                width: 90%;
+                padding: 2rem;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            `;
+
+            modal.innerHTML = `
+                <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 1.5rem;">Results Not Available</h2>
+                <p style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Only administrators can view election results.</p>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Results will be published after the election ends</p>
+                <button onclick="closeResultsModal()" style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.5rem;
+                    background: #2563eb;
+                    color: white;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    border-radius: 12px;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">OK</button>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeResultsModal();
+                }
+            });
+        }
+
+        function closeResultsModal() {
+            const overlay = document.getElementById('results-modal-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+    </script>
+</body>
+</html>

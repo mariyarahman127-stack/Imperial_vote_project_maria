@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elections - UniVote</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+</head>
+<body data-page="voter-dashboard">
+    <!-- Dashboard Layout -->
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">🗳️</span>
+                    <span class="logo-text">UniVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="voter-dashboard.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="voter-elections.html" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Elections</span>
+                </a>
+                <a href="voter-history.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span>My Votes</span>
+                </a>
+                <a href="results.html?id=1" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <span>Results</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">JD</div>
+                    <div class="user-details">
+                        <h4>John Doe</h4>
+                        <p>Voter</p>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-outline" id="logout-btn" style="width: 100%;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                        <polyline points="16,17 21,12 16,7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">All Elections</h1>
+                    <p style="color: var(--text-secondary);">Browse and participate in available elections</p>
+                </div>
+                <div class="header-actions">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-outline" onclick="filterElections('all')">All</button>
+                        <button class="btn btn-outline" onclick="filterElections('active')">Active</button>
+                        <button class="btn btn-outline" onclick="filterElections('upcoming')">Upcoming</button>
+                        <button class="btn btn-outline" onclick="filterElections('ended')">Ended</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Election Cards -->
+            <div class="cards-grid" id="elections-container">
+                <!-- Elections will be rendered here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        async function renderAllElections() {
+            const container = document.getElementById('elections-container');
+            const elections = window.UniVote.Elections.getAll();
+            
+            // Get actual status for each election based on voting schedule
+            const electionsWithStatus = await Promise.all(elections.map(async (election) => {
+                const statusInfo = await window.UniVote.Elections.getElectionStatus(election.id);
+                return { ...election, status: statusInfo.status, statusMessage: statusInfo.message };
+            }));
+            
+            container.innerHTML = electionsWithStatus.map(election => {
+                const hasVoted = window.UniVote.Voting.hasVoted(election.id);
+                const statusColors = {
+                    active: 'var(--success)',
+                    upcoming: 'var(--warning)',
+                    ended: 'var(--text-muted)'
+                };
+                
+                return `
+                    <div class="card" data-status="${election.status}">
+                        <div class="card-header">
+                            <span class="status-badge ${election.status}">${election.status.charAt(0).toUpperCase() + election.status.slice(1)}</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">
+                                ${election.candidates.length} candidates
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">${election.title}</h3>
+                            <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem;">${election.description}</p>
+                            
+                            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+                                <span>📅 ${new Date(election.startDate).toLocaleDateString()}</span>
+                                <span>👥 ${election.totalVoters} voters</span>
+                            </div>
+                            
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${Math.round((election.candidates.reduce((s,c) => s + c.votes, 0) / election.totalVoters) * 100)}%"></div>
+                                </div>
+                                <div class="progress-info">
+                                    <span>${election.candidates.reduce((s,c) => s + c.votes, 0)} votes cast</span>
+                                    <span>${Math.round((election.candidates.reduce((s,c) => s + c.votes, 0) / election.totalVoters) * 100)}% turnout</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                ${election.status === 'active' ? `
+                                    <a href="vote.html?id=${election.id}" class="btn ${hasVoted ? 'btn-outline' : 'btn-primary'}" style="flex: 1;">
+                                        ${hasVoted ? 'View Vote' : 'Cast Vote'}
+                                    </a>
+                                ` : ''}
+                                <a href="results.html?id=${election.id}" class="btn btn-outline" style="flex: 1;">
+                                    View Results
+                                </a>
+                            </div>
+                            
+                            ${hasVoted ? `
+                                <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0, 217, 165, 0.1); border-radius: var(--radius-md); text-align: center;">
+                                    <span style="color: var(--success);">✓ You have voted in this election</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function filterElections(status) {
+            const cards = document.querySelectorAll('#elections-container .card');
+            cards.forEach(card => {
+                if (status === 'all' || card.dataset.status === status) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAllElections();
+            window.UniVote.EventHandlers.initLogout();
+
+            // Intercept Results links to show message
+            const resultsLinks = document.querySelectorAll('a[href*="results.html"]');
+            resultsLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showResultsNotAvailable();
+                });
+            });
+        });
+
+        function showResultsNotAvailable() {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'results-modal-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                backdrop-filter: blur(4px);
+            `;
+
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                max-width: 420px;
+                width: 90%;
+                padding: 2rem;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            `;
+
+            modal.innerHTML = `
+                <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 1.5rem;">Results Not Available</h2>
+                <p style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Only administrators can view election results.</p>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Results will be published after the election ends</p>
+                <button onclick="closeResultsModal()" style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.5rem;
+                    background: #2563eb;
+                    color: white;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    border-radius: 12px;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">OK</button>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeResultsModal();
+                }
+            });
+        }
+
+        function closeResultsModal() {
+            const overlay = document.getElementById('results-modal-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+    </script>
+</body>
+</html>
