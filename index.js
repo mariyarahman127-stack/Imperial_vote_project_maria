@@ -324,6 +324,40 @@ app.post('/api/casting-vote', (req, res) => {
 });
 
 // Admin endpoint to reset all votes
+app.post('/api/admin/save-schedule', async (req, res) => {
+    const { adminKey, startTime, endTime, startTimeFormatted, endTimeFormatted, updatedAt, updatedAtFormatted } = req.body;
+    if (adminKey && adminKey !== 'admin2026') {
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+    
+    try {
+        const scheduleData = {
+            startTime: startTime,
+            endTime: endTime,
+            startTimeFormatted: startTimeFormatted,
+            endTimeFormatted: endTimeFormatted,
+            updatedAt: updatedAt || Date.now(),
+            updatedAtFormatted: updatedAtFormatted
+        };
+        
+        await firebaseRequest('PUT', '/votingSchedule', scheduleData);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error saving schedule:', error);
+        res.status(500).json({ success: false, message: 'Failed to save schedule' });
+    }
+});
+
+app.post('/api/admin/delete-schedule', async (req, res) => {
+    try {
+        await firebaseRequest('DELETE', '/votingSchedule');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting schedule:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete schedule' });
+    }
+});
+
 app.post('/api/admin/reset-votes', async (req, res) => {
     const { adminKey } = req.body;
     if (adminKey !== 'admin2026') {

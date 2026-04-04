@@ -812,14 +812,16 @@
                     updatedAtFormatted: new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true })
                 };
                 
-                // Save to Firebase
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    await firebase.database().ref('votingSchedule').set(scheduleData);
-                    console.log('Schedule saved to Firebase:', scheduleData);
-                    console.log('Start time (local):', startDate.toLocaleString());
-                    console.log('End time (local):', endDate.toLocaleString());
-                    console.log('Start time (UTC):', startDate.toISOString());
-                    console.log('End time (UTC):', endDate.toISOString());
+                // Save to server API (which saves to Firebase)
+                const apiBaseUrl = window.location.origin;
+                const saveResponse = await fetch(apiBaseUrl + '/api/admin/save-schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(scheduleData)
+                });
+                
+                if (saveResponse.ok) {
+                    console.log('Schedule saved via API');
                 }
                 
                 // Also save to localStorage as backup
@@ -833,18 +835,18 @@
             }
         }
 
-        // Delete voting schedule from Firebase
+        // Delete voting schedule
         async function deleteSchedule() {
             if (!confirm('Are you sure you want to delete the voting schedule?')) {
                 return;
             }
             
             try {
-                // Delete from Firebase
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    await firebase.database().ref('votingSchedule').remove();
-                    console.log('Schedule deleted from Firebase');
-                }
+                // Delete via server API
+                const apiBaseUrl = window.location.origin;
+                await fetch(apiBaseUrl + '/api/admin/delete-schedule', {
+                    method: 'POST'
+                });
                 
                 // Also remove from localStorage
                 localStorage.removeItem('votingSchedule');
