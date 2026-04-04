@@ -669,49 +669,26 @@ app.delete('/api/admin/reset-user/:email', async (req, res) => {
     }
 });
 
-// Serve static files - check multiple directories
-const staticDir = process.cwd();
-console.log('Static directory:', staticDir);
-app.use(express.static(staticDir));
+// Serve static files
 app.use(express.static(path.join(__dirname, '.')));
 
-// Handle SPA routing
+// Explicit routes for all HTML pages
+app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
+app.get('/voter-dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'voter-dashboard.html')));
+app.get('/vote.html', (req, res) => res.sendFile(path.join(__dirname, 'vote.html')));
+app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'admin-dashboard.html')));
+app.get('/admin-login.html', (req, res) => res.sendFile(path.join(__dirname, 'admin-login.html')));
+app.get('/results.html', (req, res) => res.sendFile(path.join(__dirname, 'results.html')));
+app.get('/forgot-password.html', (req, res) => res.sendFile(path.join(__dirname, 'forgot-password.html')));
+app.get('/vote-success.html', (req, res) => res.sendFile(path.join(__dirname, 'vote-success.html')));
+
+// Handle all other routes
 app.get('*', (req, res) => {
-    // Skip API requests
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
-    
-    const fs = require('fs');
-    let requestedPath = req.path;
-    
-    // Check multiple possible locations
-    const searchPaths = [
-        path.join(process.cwd(), requestedPath),
-        path.join(process.cwd(), '..', requestedPath),
-        path.join(__dirname, requestedPath),
-        path.join(__dirname, '..', requestedPath),
-    ];
-    
-    for (const filePath of searchPaths) {
-        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-            return res.sendFile(filePath);
-        }
-    }
-    
-    // Try index.html in common locations
-    const indexPaths = [
-        path.join(process.cwd(), 'index.html'),
-        path.join(__dirname, 'index.html'),
-    ];
-    
-    for (const indexPath of indexPaths) {
-        if (fs.existsSync(indexPath)) {
-            return res.sendFile(indexPath);
-        }
-    }
-    
-    res.status(404).send('Not found');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start server (for local development)
