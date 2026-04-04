@@ -669,11 +669,10 @@ app.delete('/api/admin/reset-user/:email', async (req, res) => {
     }
 });
 
-// Serve static files FIRST
-app.use(express.static(path.join(__dirname, '.'), {
-    maxAge: 0,
-    etag: false
-}));
+// Serve static files from public folder (Vercel standard)
+app.use(express.static(path.join(__dirname, 'public')));
+// Also serve from root
+app.use(express.static(path.join(__dirname, '.')));
 
 // Handle all routes except API - serve index.html as SPA
 app.get('*', (req, res) => {
@@ -681,17 +680,21 @@ app.get('*', (req, res) => {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
     
-    // If it's an HTML file request, try to find it
-    if (req.path.endsWith('.html')) {
-        const filePath = path.join(__dirname, req.path);
-        const fs = require('fs');
-        if (fs.existsSync(filePath)) {
-            return res.sendFile(filePath);
-        }
+    // Try to find HTML file in public folder
+    const fs = require('fs');
+    const publicPath = path.join(__dirname, 'public', req.path);
+    const rootPath = path.join(__dirname, req.path);
+    
+    // Check public folder first, then root
+    if (fs.existsSync(publicPath)) {
+        return res.sendFile(publicPath);
+    }
+    if (fs.existsSync(rootPath)) {
+        return res.sendFile(rootPath);
     }
     
-    // Default to index.html
-    res.sendFile(path.join(__dirname, 'index.html'));
+    // Default to index.html from public
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Start server (for local development)
