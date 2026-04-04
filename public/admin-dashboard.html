@@ -806,7 +806,10 @@
                 const scheduleData = {
                     startTime: startDate.getTime(),
                     endTime: endDate.getTime(),
-                    updatedAt: Date.now()
+                    startTimeFormatted: startDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }),
+                    endTimeFormatted: endDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }),
+                    updatedAt: Date.now(),
+                    updatedAtFormatted: new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true })
                 };
                 
                 // Save to Firebase
