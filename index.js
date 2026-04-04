@@ -458,31 +458,40 @@ app.post('/api/login', async (req, res) => {
 // API endpoint for user registration
 app.post('/api/register', async (req, res) => {
     const { email, name, studentId, department, password, uid } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Email and password required' });
+    if (!email || !password || !studentId) {
+        return res.status(400).json({ success: false, message: 'Email, student ID and password required' });
     }
     
     const emailLower = email.toLowerCase().trim();
-    const firebaseKey = emailToFirebaseKey(emailLower);
+    const studentIdClean = studentId.trim();
     
     try {
-        // Check if user already exists in registeredUsers
+        // Check if user already exists by studentId
         const registeredUsersData = await firebaseRequest('GET', '/registeredUsers');
-        if (registeredUsersData && registeredUsersData[firebaseKey]) {
-            return res.status(400).json({ success: false, message: 'Email already registered' });
+        if (registeredUsersData && registeredUsersData[studentIdClean]) {
+            return res.status(400).json({ success: false, message: 'Student ID already registered' });
+        }
+        
+        // Also check by email
+        if (registeredUsersData) {
+            for (const [key, user] of Object.entries(registeredUsersData)) {
+                if (user.email === emailLower) {
+                    return res.status(400).json({ success: false, message: 'Email already registered' });
+                }
+            }
         }
         
         // Also check if user has already voted
         const voters = await getAllVoters();
-        if (voters && voters[firebaseKey]) {
-            return res.status(400).json({ success: false, message: 'This email has already voted. Cannot register again.' });
+        if (voters && voters[studentIdClean]) {
+            return res.status(400).json({ success: false, message: 'This student has already voted. Cannot register again.' });
         }
         
-        // Save to Firebase registeredUsers node
-        const result = await firebaseRequest('PUT', '/registeredUsers/' + firebaseKey, {
+        // Save to Firebase registeredUsers node using studentId as key
+        const result = await firebaseRequest('PUT', '/registeredUsers/' + studentIdClean, {
             email: emailLower,
             name: name,
-            studentId: studentId,
+            studentId: studentIdClean,
             department: department,
             password: password,
             uid: uid || null,
