@@ -663,11 +663,13 @@
             }
             
             try {
-                const response = await fetch('/api/vote', {
+                const apiBaseUrl = window.location.origin;
+                const response = await fetch(apiBaseUrl + '/api/vote', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: currentUser.email,
+                        studentId: currentUser.studentId,
                         candidateId: selectedCandidate.id
                     })
                 });

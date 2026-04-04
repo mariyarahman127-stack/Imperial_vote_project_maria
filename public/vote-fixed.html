@@ -337,7 +337,8 @@
             try {
                 generatedVoteId = generateVoteId();
                 const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                const response = await fetch('/api/vote', {
+                const apiBaseUrl = window.location.origin;
+                const response = await fetch(apiBaseUrl + '/api/vote', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
