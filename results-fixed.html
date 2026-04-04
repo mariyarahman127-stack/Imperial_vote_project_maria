@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Results - Imperial College of Engineering</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <style>
+        .result-symbol {
+            width: 60px;
+            height: 60px;
+            margin-right: 1rem;
+            background: linear-gradient(135deg, rgba(233, 69, 96, 0.1), rgba(255, 107, 107, 0.1));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 2px solid var(--accent);
+            flex-shrink: 0;
+        }
+        .result-symbol-name {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(233, 69, 96, 0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 0.25rem;
+        }
+        .result-item {
+            display: flex;
+            align-items: center;
+            padding: 1.25rem;
+            background: var(--background);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+        .result-info {
+            flex: 1;
+        }
+        .result-info h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .result-dept {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        .result-rank {
+            width: 30px;
+            height: 30px;
+            background: var(--gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .result-votes {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-right: 1rem;
+        }
+        .result-percentage {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 60px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body data-page="results">
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">🗳️</span>
+                    <span class="logo-text">UniVote</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="voter-dashboard.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="vote.html" class="nav-item">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                    <span>Cast Vote</span>
+                </a>
+                <a href="results.html" class="nav-item active">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                    <span>Results</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">JD</div>
+                    <div class="user-details">
+                        <h4 id="user-name">Loading...</h4>
+                        <p id="user-role">Voter</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline" id="logout-btn" style="width: 100%;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-header">
+                <div>
+                    <h1 class="dashboard-title">Imperial College of Engineering</h1>
+                    <p style="color: var(--text-secondary);">College President Election 2026</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid" id="admin-stats" style="display: none; grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-votes">0</div>
+                    <div class="stat-label">Total Votes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="turnout">0%</div>
+                    <div class="stat-label">Turnout</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="remaining">500</div>
+                    <div class="stat-label">Remaining</div>
+                </div>
+            </div>
+
+            <div id="results-container"></div>
+        </main>
+    </div>
+
+    <script>
+        const totalVoters = 500;
+        let currentUser = null;
+        let resultsData = null;
+
+        // Check auth
+        function checkAuth() {
+            const stored = localStorage.getItem('currentUser');
+            if (!stored) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUser = JSON.parse(stored);
+            document.getElementById('user-name').textContent = currentUser.email || 'User';
+            document.getElementById('user-role').textContent = currentUser.role || 'Voter';
+            
+            const isAdmin = currentUser.role === 'admin' || currentUser.role === 'chairperson';
+            document.getElementById('admin-stats').style.display = isAdmin ? 'grid' : 'none';
+        }
+
+        // Load results from SERVER API
+        async function loadResults() {
+            try {
+                const response = await fetch('/api/results');
+                if (response.ok) {
+                    resultsData = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading results:', error);
+                resultsData = { candidates: [], totalVotes: 0 };
+            }
+        }
+
+        async function renderResults() {
+            await loadResults();
+            
+            const totalVotes = resultsData.totalVotes;
+            const sorted = resultsData.candidates.sort((a, b) => b.votes - a.votes);
+            const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'chairperson');
+
+            // Update stats if admin
+            if (isAdmin) {
+                document.getElementById('total-votes').textContent = totalVotes;
+                document.getElementById('turnout').textContent = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 100) + '%' : '0%';
+                document.getElementById('remaining').textContent = totalVoters - totalVotes;
+            }
+
+            let html = '';
+            
+            if (!isAdmin) {
+                html = `
+                    <div class="card">
+                        <div class="card-body" style="text-align: center; padding: 4rem 2rem;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
+                            <h3 style="margin-bottom: 1rem;">Results Not Publicly Available</h3>
+                            <p style="color: var(--text-secondary);">
+                                The election results are confidential. Only administrators can view the results.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                sorted.forEach((c, i) => {
+                    const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
+                    html += `
+                        <div class="result-item">
+                            <div class="result-rank">${i + 1}</div>
+                            <div class="result-symbol">${c.symbol}</div>
+                            <div class="result-info">
+                                <h4>${c.name} <span class="result-symbol-name">${c.symbolName}</span></h4>
+                                <div class="result-dept">${c.department}</div>
+                                <div class="progress-bar" style="margin-top: 0.75rem;">
+                                    <div class="progress-fill" style="width: ${pct}%"></div>
+                                </div>
+                            </div>
+                            <div class="result-votes">${c.votes} votes</div>
+                            <div class="result-percentage">${pct}%</div>
+                        </div>
+                    `;
+                });
+                
+                if (sorted.length === 0) {
+                    html = '<p style="text-align: center; color: var(--text-muted);">No votes yet</p>';
+                }
+            }
+            
+            document.getElementById('results-container').innerHTML = html;
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        
+        checkAuth();
+        renderResults();
+        setInterval(renderResults, 5000);
+    </script>
+</body>
+</html>

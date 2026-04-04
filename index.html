@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imperial College of Engineering - Voting System</title>
+    <!-- Google Fonts - Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <style>
+        /* =====================================================
+           Modern Voting System - Clean Blue/White/Gray Theme
+           ===================================================== */
+        
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary: #64748b;
+            --accent: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-alt: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s ease;
+        }
+
+        /* Reset & Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition);
+        }
+
+        /* =====================================================
+           Navigation Bar
+           ===================================================== */
+        
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .logo i {
+            font-size: 1.75rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary i {
+            font-size: 1rem;
+        }
+
+        /* =====================================================
+           Hero Section
+           ===================================================== */
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            animation: fadeInUp 3s ease-in-out infinite;
+        }
+
+        .hero-title span {
+            color: var(--primary);
+            display: inline-block;
+            animation: slideInLeft 3s ease-in-out infinite;
+        }
+
+        @keyframes fadeInUp {
+            0%, 100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            50% {
+                opacity: 0.8;
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes slideInLeft {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            50% {
+                transform: translateX(5px);
+            }
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            max-width: 600px;
+        }
+
+        .hero-description {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+            max-width: 500px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            color: var(--primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* =====================================================
+           Statistics Cards
+           ===================================================== */
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid var(--border);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.users {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
+            color: var(--primary);
+        }
+
+        .stat-icon.candidates {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+            color: var(--success);
+        }
+
+        .stat-icon.votes {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+            color: var(--warning);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* =====================================================
+           How It Works Section
+           ===================================================== */
+        
+        .how-it-works {
+            padding: 4rem 2rem;
+            background: var(--surface-alt);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .section-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .step-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px;
+            transition: var(--transition);
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 1rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .step-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-card p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* =====================================================
+           Footer
+           ===================================================== */
+        
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            padding: 3rem 2rem 1.5rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo i {
+            color: var(--primary-light);
+        }
+
+        .footer-content p {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 1.5rem;
+            text-align: center;
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 0;
+        }
+
+        /* =====================================================
+           Responsive Design
+           ===================================================== */
+        
+        @media (max-width: 768px) {
+            .nav-container {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 7rem 1.5rem 3rem;
+            }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .hero-actions .btn-primary,
+            .hero-actions .btn-outline {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.25rem;
+            }
+
+            .steps-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .step-card {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.75rem;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-vote-yea"></i>
+                <span>UniVote</span>
+            </a>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="results.html">Results</a>
+                <a href="login.html" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Vote
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                <span>Election 2026</span>
+            </div>
+            
+            <h1 class="hero-title">
+                <span>Imperial College</span> of Engineering
+            </h1>
+            
+            <p class="hero-subtitle">
+                College President Election 2026
+            </p>
+            
+            <p class="hero-description">
+                Cast your vote securely. One student, one vote. 
+                Your voice matters in choosing the next leader of our college.
+            </p>
+            
+            <div class="hero-actions">
+                <a href="vote-with-animation.html" class="btn-primary">
+                    <i class="fas fa-vote-yea"></i> Cast Your Vote
+                </a>
+                <a href="results.html" class="btn-outline">
+                    <i class="fas fa-chart-bar"></i> View Results
+                </a>
+            </div>
+                    Login to Vote
+                </a>
+                <a href="results.html" class="btn-outline">
+                    <i class="fas fa-chart-bar"></i>
+                    View Results
+                </a>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number" data-count="500">0</div>
+                    <div class="stat-label">Eligible Voters</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon candidates">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="stat-number" data-count="5">0</div>
+                    <div class="stat-label">Candidates</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon votes">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="stat-number" id="votes-cast" data-count="0">Loading...</div>
+                    <div class="stat-label">Votes Cast</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="about">
+        <div class="section-header">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Simple steps to cast your vote</p>
+        </div>
+        
+        <div class="steps-container">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Login</h3>
+                <p>Students login with their college email to verify eligibility</p>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Vote</h3>
+                <p>Choose your preferred candidate. One vote per student only.</p>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Results</h3>
+                <p>Results are visible only to admin after voting ends</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-vote-yea"></i>
+                <span>UniVote</span>
+            </div>
+            <p><strong>Imperial College of Engineering</strong><br>College President Election 2026</p>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Imperial College of Engineering. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Fetch votes count from database
+        async function fetchVotesCount() {
+            try {
+                const response = await fetch('/api/results');
+                const result = await response.json();
+                const votesCount = result.totalVotes || 0;
+                console.log('Votes count:', votesCount);
+                document.getElementById('votes-cast').dataset.count = votesCount;
+                document.getElementById('votes-cast').textContent = votesCount;
+                animateCounter(document.getElementById('votes-cast'), votesCount);
+            } catch (error) {
+                console.error('Error fetching votes:', error);
+                document.getElementById('votes-cast').textContent = '0';
+            }
+        }
+
+        // Counter Animation
+        function animateCounter(element, target) {
+            let count = 0;
+            const duration = 2000;
+            const increment = target / (duration / 16);
+            const timer = setInterval(() => {
+                count += increment;
+                if (count >= target) {
+                    count = target;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.floor(count).toLocaleString();
+            }, 16);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchVotesCount();
+            
+            // Skip votes-cast since it's handled separately
+            const statNumbers = document.querySelectorAll('.stat-number[data-count]:not(#votes-cast)');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const target = parseInt(entry.target.dataset.count);
+                        let count = 0;
+                        const duration = 2000;
+                        const increment = target / (duration / 16);
+                        const timer = setInterval(() => {
+                            count += increment;
+                            if (count >= target) {
+                                count = target;
+                                clearInterval(timer);
+                            }
+                            entry.target.textContent = Math.floor(count).toLocaleString();
+                        }, 16);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            statNumbers.forEach(stat => observer.observe(stat));
+        });
+
+        // Intercept Results links to show message
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find all links that point to results.html
+            const resultsLinks = document.querySelectorAll('a[href="results.html"]');
+            
+            resultsLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showResultsNotAvailable();
+                });
+            });
+        });
+
+        function showResultsNotAvailable() {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'results-modal-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                backdrop-filter: blur(4px);
+            `;
+
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                max-width: 420px;
+                width: 90%;
+                padding: 2rem;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            `;
+
+            modal.innerHTML = `
+                <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
+                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 1.5rem;">Results Not Available</h2>
+                <p style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Only administrators can view election results.</p>
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Results will be published after the election ends</p>
+                <button onclick="closeResultsModal()" style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1.5rem;
+                    background: #2563eb;
+                    color: white;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    border-radius: 12px;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                ">OK</button>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+
+            // Close on overlay click
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closeResultsModal();
+                }
+            });
+        }
+
+        function closeResultsModal() {
+            const overlay = document.getElementById('results-modal-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+    </script>
+</body>
+</html>
+
