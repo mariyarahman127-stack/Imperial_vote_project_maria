@@ -226,13 +226,35 @@
             line-height: 1.2;
             margin-bottom: 1rem;
             color: var(--text-primary);
-            animation: fadeInUp 3s ease-in-out infinite;
+            animation: textGlow 2s ease-in-out infinite;
         }
 
         .hero-title span {
             color: var(--primary);
             display: inline-block;
-            animation: slideInLeft 3s ease-in-out infinite;
+            animation: textPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes textGlow {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 20px rgba(37, 99, 235, 0.8), 0 0 40px rgba(37, 99, 235, 0.4);
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes textPulse {
+            0%, 100% { 
+                color: var(--primary);
+                transform: scale(1);
+            }
+            50% { 
+                color: #9333ea;
+                transform: scale(1.05);
+            }
         }
 
         @keyframes fadeInUp {
