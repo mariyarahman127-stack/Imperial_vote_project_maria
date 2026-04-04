@@ -162,6 +162,25 @@
             </div>
 
             <div class="form-group">
+                <label for="studentId">Student ID</label>
+                <input type="text" id="studentId" placeholder="Enter your student ID" required>
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <select id="department" class="form-input" required>
+                    <option value="">Select your department</option>
+                    <option value="CSE">Computer Science & Engineering (CSE)</option>
+                    <option value="EEE">Electrical & Electronic Engineering (EEE)</option>
+                    <option value="CE">Civil Engineering (CE)</option>
+                    <option value="ME">Mechanical Engineering (ME)</option>
+                    <option value="BBA">Business Administration (BBA)</option>
+                    <option value="LAW">Law</option>
+                    <option value="English">English</option>
+                </select>
+            </div>
+
+            <div class="form-group">
                 <label for="password">Create Password</label>
                 <div class="password-wrapper">
                     <input type="password" id="password" placeholder="Create a strong password" required minlength="8">
@@ -211,11 +230,27 @@
             
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.toLowerCase().trim();
+            const studentId = document.getElementById('studentId').value.trim();
+            const department = document.getElementById('department').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
             const submitBtn = document.getElementById('submit-btn');
             const errorMessage = document.getElementById('error-message');
             const successMessage = document.getElementById('success-message');
+            
+            // Validate student ID
+            if (!studentId || studentId.length < 4) {
+                errorMessage.textContent = 'Please enter a valid student ID';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            // Validate department
+            if (!department) {
+                errorMessage.textContent = 'Please select your department';
+                errorMessage.style.display = 'block';
+                return;
+            }
             
             // Reset messages
             errorMessage.style.display = 'none';
@@ -270,8 +305,8 @@
                 body: JSON.stringify({
                     email: email,
                     name: name,
-                    studentId: '',
-                    department: '',
+                    studentId: studentId,
+                    department: department,
                     password: password
                 })
             })
