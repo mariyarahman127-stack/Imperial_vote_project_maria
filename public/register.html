@@ -129,13 +129,15 @@
             text-color: #991b1b;
             display: none;
         }
-        .password-wrapper { position: relative; }
-        .password-wrapper input { padding-right: 3rem; }
+        .password-wrapper { position: relative; display: inline-block; width: 100%; }
+        .password-wrapper input { width: 100%; padding-right: 40px; }
         .password-toggle {
-            position: absolute; right: 10px; top: 38px;
+            position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%);
             background: none; border: none; cursor: pointer; color: #666;
             font-size: 16px;
             padding: 5px;
+            z-index: 10;
         }
         .password-toggle:hover { color: #2563eb; }
     </style>
