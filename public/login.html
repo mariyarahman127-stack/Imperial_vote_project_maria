@@ -38,6 +38,12 @@
         .admin-link, .back-link { margin-top: 1.5rem; text-align: center; }
         .admin-link a, .back-link a { color: var(--text-secondary); font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .admin-link a:hover, .back-link a:hover { color: var(--primary); }
+        .password-wrapper { position: relative; }
+        .password-wrapper .form-input { padding-right: 3rem; }
+        .password-toggle {
+            position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -56,7 +62,12 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
                     <a href="forgot-password.html" style="color: #667eea; font-size: 0.875rem; text-decoration: none;">Forgot Password?</a>
@@ -72,6 +83,17 @@
         </div>
     </div>
     <script>
+        function togglePassword() {
+            var passwordInput = document.getElementById('password');
+            var toggleBtn = document.querySelector('.password-toggle i');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.className = 'fas fa-eye';
+            }
+        }
         function isValidUniversityEmail(email) {
             if (!email) return false;
             var emailRegex = /^[0-9]+@imperial\.edu\.bd$/i;
