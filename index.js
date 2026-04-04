@@ -669,31 +669,28 @@ app.delete('/api/admin/reset-user/:email', async (req, res) => {
     }
 });
 
-// Explicit routes for all HTML pages
-const htmlDir = __dirname;
+// Serve static files FIRST
+app.use(express.static(path.join(__dirname, '.'), {
+    maxAge: 0,
+    etag: false
+}));
 
-app.get('/login.html', (req, res) => {
-    console.log('Serving login.html from:', htmlDir);
-    res.sendFile(path.join(htmlDir, 'login.html'));
-});
-app.get('/register.html', (req, res) => res.sendFile(path.join(htmlDir, 'register.html')));
-app.get('/voter-dashboard.html', (req, res) => res.sendFile(path.join(htmlDir, 'voter-dashboard.html')));
-app.get('/vote.html', (req, res) => res.sendFile(path.join(htmlDir, 'vote.html')));
-app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(htmlDir, 'admin-dashboard.html')));
-app.get('/admin-login.html', (req, res) => res.sendFile(path.join(htmlDir, 'admin-login.html')));
-app.get('/results.html', (req, res) => res.sendFile(path.join(htmlDir, 'results.html')));
-app.get('/forgot-password.html', (req, res) => res.sendFile(path.join(htmlDir, 'forgot-password.html')));
-app.get('/vote-success.html', (req, res) => res.sendFile(path.join(htmlDir, 'vote-success.html')));
-
-// Serve JS and CSS files
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/css', express.static(path.join(__dirname, 'css')));
-
-// Handle all other routes - serve index.html
+// Handle all routes except API - serve index.html as SPA
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
+    
+    // If it's an HTML file request, try to find it
+    if (req.path.endsWith('.html')) {
+        const filePath = path.join(__dirname, req.path);
+        const fs = require('fs');
+        if (fs.existsSync(filePath)) {
+            return res.sendFile(filePath);
+        }
+    }
+    
+    // Default to index.html
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
