@@ -873,27 +873,31 @@
     </script>
 <script>
         // Typing animation for "Imperial College of Engineering"
-        const textElement = document.querySelector('.typing-text');
-        const text = "Imperial College of Engineering";
-        let index = 0;
-        
-        function typeText() {
-            if (index < text.length) {
-                textElement.textContent += text.charAt(index);
-                index++;
-                setTimeout(typeText, 150);
-            } else {
-                // Wait 3 seconds, then restart typing
-                setTimeout(() => {
-                    index = 0;
-                    textElement.textContent = '';
-                    setTimeout(typeText, 500);
-                }, 3000);
+        document.addEventListener('DOMContentLoaded', function() {
+            const textElement = document.querySelector('.typing-text');
+            if (!textElement) return;
+            
+            const text = "Imperial College of Engineering";
+            let index = 0;
+            
+            function typeText() {
+                if (index < text.length) {
+                    textElement.textContent += text.charAt(index);
+                    index++;
+                    setTimeout(typeText, 150);
+                } else {
+                    // Wait 3 seconds, then restart typing
+                    setTimeout(() => {
+                        index = 0;
+                        textElement.textContent = '';
+                        setTimeout(typeText, 500);
+                    }, 3000);
+                }
             }
-        }
-        
-        // Start typing when page loads
-        typeText();
+            
+            // Start typing when page loads
+            typeText();
+        });
     </script>
 </body>
 </html>
