@@ -669,21 +669,27 @@ app.delete('/api/admin/reset-user/:email', async (req, res) => {
     }
 });
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '.')));
-
 // Explicit routes for all HTML pages
-app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/register.html', (req, res) => res.sendFile(path.join(__dirname, 'register.html')));
-app.get('/voter-dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'voter-dashboard.html')));
-app.get('/vote.html', (req, res) => res.sendFile(path.join(__dirname, 'vote.html')));
-app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'admin-dashboard.html')));
-app.get('/admin-login.html', (req, res) => res.sendFile(path.join(__dirname, 'admin-login.html')));
-app.get('/results.html', (req, res) => res.sendFile(path.join(__dirname, 'results.html')));
-app.get('/forgot-password.html', (req, res) => res.sendFile(path.join(__dirname, 'forgot-password.html')));
-app.get('/vote-success.html', (req, res) => res.sendFile(path.join(__dirname, 'vote-success.html')));
+const htmlDir = __dirname;
 
-// Handle all other routes
+app.get('/login.html', (req, res) => {
+    console.log('Serving login.html from:', htmlDir);
+    res.sendFile(path.join(htmlDir, 'login.html'));
+});
+app.get('/register.html', (req, res) => res.sendFile(path.join(htmlDir, 'register.html')));
+app.get('/voter-dashboard.html', (req, res) => res.sendFile(path.join(htmlDir, 'voter-dashboard.html')));
+app.get('/vote.html', (req, res) => res.sendFile(path.join(htmlDir, 'vote.html')));
+app.get('/admin-dashboard.html', (req, res) => res.sendFile(path.join(htmlDir, 'admin-dashboard.html')));
+app.get('/admin-login.html', (req, res) => res.sendFile(path.join(htmlDir, 'admin-login.html')));
+app.get('/results.html', (req, res) => res.sendFile(path.join(htmlDir, 'results.html')));
+app.get('/forgot-password.html', (req, res) => res.sendFile(path.join(htmlDir, 'forgot-password.html')));
+app.get('/vote-success.html', (req, res) => res.sendFile(path.join(htmlDir, 'vote-success.html')));
+
+// Serve JS and CSS files
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+
+// Handle all other routes - serve index.html
 app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
