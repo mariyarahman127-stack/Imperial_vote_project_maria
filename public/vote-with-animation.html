@@ -658,6 +658,10 @@
             // Save to Firebase first (for cross-device sync)
             try {
                 await FirebaseService.saveVote(voteDataForFirebase);
+                // Also save voter with email key
+                await FirebaseService.saveVoter(currentUser.email, {
+                    votedFor: selectedCandidate.symbol + ' ' + selectedCandidate.name
+                });
             } catch (e) {
                 console.log('Firebase save failed, continuing:', e);
             }

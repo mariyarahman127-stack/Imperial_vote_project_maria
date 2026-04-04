@@ -4,8 +4,14 @@
 // =====================================================
 
 const FirebaseService = {
-    // Collection name for votes (node in Realtime DB)
+    // Collection names for Realtime DB
     VOTES_NODE: 'votes',
+    VOTERS_NODE: 'voters',
+
+    // Convert email to valid Firebase key
+    emailToFirebaseKey: function(email) {
+        return (email || '').toLowerCase().replace(/@/g, '_at_').replace(/\./g, '_dot_');
+    },
 
     // Initialize Realtime Database
     init: function() {
@@ -60,12 +66,41 @@ const FirebaseService = {
                 timestampRaw: Date.now()
             });
             
-            console.log('Vote saved to Firebase with Receipt ID:', receiptId);
+console.log('Vote saved to Firebase with Receipt ID:', receiptId);
             return { success: true, id: receiptId };
         } catch (error) {
             console.error('Error saving vote to Firebase:', error);
             // Fallback to localStorage
             return self.saveVoteLocal({...voteData, id: receiptId});
+        }
+    },
+
+    // Save voter to Firebase (using email as key)
+    saveVoter: async function(email, voteInfo) {
+        const self = this;
+        const firebaseKey = self.emailToFirebaseKey(email);
+        
+        if (!self.init() || !window.firebaseDb) {
+            console.log('Firebase not initialized, skipping voter save');
+            return { success: false };
+        }
+        
+        try {
+            const votersRef = window.firebaseDb.ref(self.VOTERS_NODE);
+            const voterRef = votersRef.child(firebaseKey);
+            
+            await voterRef.set({
+                hasVoted: true,
+                votedFor: voteInfo.votedFor,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                timestampRaw: Date.now()
+            });
+            
+            console.log('Voter saved to Firebase with email key:', firebaseKey);
+            return { success: true };
+        } catch (error) {
+            console.error('Error saving voter to Firebase:', error);
+            return { success: false };
         }
     },
 
