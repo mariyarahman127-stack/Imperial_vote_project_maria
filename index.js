@@ -669,34 +669,49 @@ app.delete('/api/admin/reset-user/:email', async (req, res) => {
     }
 });
 
-// Serve static files - works on both local and Vercel
+// Serve static files - check multiple directories
+const staticDir = process.cwd();
+console.log('Static directory:', staticDir);
+app.use(express.static(staticDir));
 app.use(express.static(path.join(__dirname, '.')));
 
 // Handle SPA routing
 app.get('*', (req, res) => {
-    console.log('Request path:', req.path);
-    
-    // For API requests that don't match, return 404
+    // Skip API requests
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'API endpoint not found' });
     }
     
-    // Try to find the file in root folder
     const fs = require('fs');
-    let filePath = req.path === '/' ? '/index.html' : req.path;
-    const fullPath = path.join(__dirname, filePath);
-    console.log('Looking for file:', fullPath);
+    let requestedPath = req.path;
     
-    // Check if file exists
-    if (fs.existsSync(fullPath)) {
-        console.log('Serving file:', fullPath);
-        return res.sendFile(fullPath);
+    // Check multiple possible locations
+    const searchPaths = [
+        path.join(process.cwd(), requestedPath),
+        path.join(process.cwd(), '..', requestedPath),
+        path.join(__dirname, requestedPath),
+        path.join(__dirname, '..', requestedPath),
+    ];
+    
+    for (const filePath of searchPaths) {
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            return res.sendFile(filePath);
+        }
     }
     
-    // Default to index.html
-    const indexPath = path.join(__dirname, 'index.html');
-    console.log('Serving index.html');
-    res.sendFile(indexPath);
+    // Try index.html in common locations
+    const indexPaths = [
+        path.join(process.cwd(), 'index.html'),
+        path.join(__dirname, 'index.html'),
+    ];
+    
+    for (const indexPath of indexPaths) {
+        if (fs.existsSync(indexPath)) {
+            return res.sendFile(indexPath);
+        }
+    }
+    
+    res.status(404).send('Not found');
 });
 
 // Start server (for local development)
