@@ -170,28 +170,28 @@ app.get('/api/results', async (req, res) => {
 
 app.post('/api/vote', async (req, res) => {
     const { email, studentId, candidateId, voteId } = req.body;
-    if (!email || !candidateId || !studentId) {
-        return res.status(400).json({ success: false, message: 'Email, student ID and candidate required' });
+    if (!email || !candidateId) {
+        return res.status(400).json({ success: false, message: 'Email and candidate required' });
     }
     
     const emailLower = email.toLowerCase().trim();
-    const studentIdClean = studentId.trim();
+    const firebaseKey = emailToFirebaseKey(emailLower);
     
     try {
-        // Check if already voted in Firebase
+        // Check if already voted in Firebase - check BOTH /voters AND /votes
         const voters = await getAllVoters();
         const allVotes = await getAllVotes();
         
-        // Check voters collection by studentId
-        if (voters && voters[studentIdClean]) {
-            const voter = voters[studentIdClean];
+        // Check voters collection by email key
+        if (voters && voters[firebaseKey]) {
+            const voter = voters[firebaseKey];
             return res.status(400).json({ success: false, message: 'Already voted', hasVoted: true, votedFor: voter.votedFor });
         }
         
-        // Also check votes collection by studentId
+        // Also check votes collection
         if (allVotes && Array.isArray(allVotes)) {
             for (const vote of allVotes) {
-                if (vote.studentId && vote.studentId === studentIdClean) {
+                if (vote.userEmail && vote.userEmail.toLowerCase() === emailLower) {
                     return res.status(400).json({ success: false, message: 'Already voted', hasVoted: true, votedFor: vote.candidateSymbol + ' ' + vote.candidateName });
                 }
             }
@@ -205,11 +205,10 @@ app.post('/api/vote', async (req, res) => {
         // Use the 8-digit voteId from frontend, or generate one if not provided
         const finalVoteId = voteId || Date.now().toString().slice(-8);
         
-        // Save vote to Firebase
+        // Save vote to Firebase (using 8-digit voteId as key)
         const voteData = {
-            id: finalVoteId,
             userEmail: emailLower,
-            studentId: studentIdClean,
+            studentId: studentId,
             candidateId: candidate.id,
             candidateName: candidate.name,
             candidateDepartment: candidate.department,
@@ -218,16 +217,16 @@ app.post('/api/vote', async (req, res) => {
             timestamp: new Date().toISOString(),
             timestampRaw: Date.now()
         };
-        await saveVoteToFirebase(voteData);
+        await firebaseRequest('PUT', '/votes/' + finalVoteId, voteData);
         
-        // Save voter to Firebase using studentId as key
-        await saveVoterToFirebase(studentIdClean, {
+        // Save voter to Firebase using email-based key
+        await saveVoterToFirebase(emailLower, {
             hasVoted: true,
             votedFor: candidate.symbol + ' ' + candidate.name,
             timestamp: new Date().toISOString()
         });
         
-        const isTied = false; // Will be recalculated on results
+        const isTied = false;
         
         res.json({ success: true, message: 'Vote recorded!', voteId: finalVoteId, tie: isTied });
     } catch (error) {
@@ -477,9 +476,10 @@ app.post('/api/register', async (req, res) => {
             }
         }
         
-        // Also check if user has already voted
+        // Also check if user has already voted (check by email)
         const voters = await getAllVoters();
-        if (voters && voters[studentIdClean]) {
+        const voterKey = emailToFirebaseKey(emailLower);
+        if (voters && voters[voterKey]) {
             return res.status(400).json({ success: false, message: 'This student has already voted. Cannot register again.' });
         }
         
