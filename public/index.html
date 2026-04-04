@@ -226,76 +226,34 @@
             line-height: 1.2;
             margin-bottom: 1rem;
             color: var(--text-primary);
-            animation: textGlow 2s ease-in-out infinite;
+            animation: fadeInUp 3s ease-in-out infinite;
         }
 
         .hero-title span {
             color: var(--primary);
             display: inline-block;
-            animation: textPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes textGlow {
-            0%, 100% { 
-                text-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
-                transform: scale(1);
-            }
-            50% { 
-                text-shadow: 0 0 20px rgba(37, 99, 235, 0.8), 0 0 40px rgba(37, 99, 235, 0.4);
-                transform: scale(1.02);
-            }
-        }
-
-        @keyframes textPulse {
-            0%, 100% { 
-                color: var(--primary);
-                transform: scale(1);
-            }
-            50% { 
-                color: #9333ea;
-                transform: scale(1.05);
-            }
-        }
-
-        .typing-text {
-            color: var(--primary);
-            font-size: 3rem;
-            font-weight: 700;
-            display: inline;
+            animation: slideInLeft 3s ease-in-out infinite;
         }
         
-        .typing-text::after {
-            content: '|';
-            animation: blink 1s infinite;
-        }
-
-        .cursor {
-            animation: blink 1s infinite;
-            color: var(--primary);
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0; }
-        }
-
         @keyframes fadeInUp {
-            0%, 100% {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
                 opacity: 1;
                 transform: translateY(0);
             }
-            50% {
-                opacity: 0.8;
-                transform: translateY(-10px);
-            }
         }
-
+        
         @keyframes slideInLeft {
-            0%, 100% {
-                transform: translateX(0);
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
             }
-            50% {
-                transform: translateX(5px);
+            to {
+                opacity: 1;
+                transform: translateX(0);
             }
         }
 
@@ -346,36 +304,31 @@
            ===================================================== */
         
         .stats-container {
-            display: flex;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
             width: 100%;
-            max-width: 900px;
-            flex-wrap: wrap;
-            padding: 0 1rem;
+            max-width: 800px;
         }
 
         .stat-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
-            padding: 2rem 2.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
             text-align: center;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             border: 1px solid var(--border);
-            min-width: 200px;
-            flex: 1;
-            max-width: 280px;
         }
 
         .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
         }
 
         .stat-icon {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             margin: 0 auto 1rem;
             background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(37, 99, 235, 0.05));
             border-radius: 50%;
@@ -383,7 +336,7 @@
             align-items: center;
             justify-content: center;
             color: var(--primary);
-            font-size: 1.75rem;
+            font-size: 1.5rem;
         }
 
         .stat-icon.users {
@@ -402,19 +355,16 @@
         }
 
         .stat-number {
-            font-size: 2.5rem;
-            font-weight: 800;
+            font-size: 2rem;
+            font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            font-family: 'Poppins', sans-serif;
+            margin-bottom: 0.25rem;
         }
 
         .stat-label {
-            font-size: 1rem;
+            font-size: 0.875rem;
             color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 500;
         }
 
         /* =====================================================
@@ -548,13 +498,6 @@
            Responsive Design
            ===================================================== */
         
-        .stat-card {
-            min-width: 150px;
-            max-width: 100%;
-            flex: none;
-            width: calc(33.333% - 1rem);
-        }
-
         @media (max-width: 768px) {
             .nav-container {
                 padding: 1rem;
@@ -588,21 +531,15 @@
                 justify-content: center;
             }
 
-.stats-container {
-                flex-direction: column;
-                align-items: center;
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
             }
-            
+
             .stat-card {
-                width: 100%;
-                max-width: 300px;
-                padding: 1.5rem;
+                padding: 1.25rem;
             }
-            
-            .stat-number {
-                font-size: 2rem;
-            }
-            
+
             .steps-container {
                 flex-direction: column;
                 align-items: center;
@@ -656,8 +593,7 @@
             </div>
             
             <h1 class="hero-title">
-                <span class="typing-text"></span>
-                <span class="cursor">|</span>
+                <span>Imperial College</span> of Engineering
             </h1>
             
             <p class="hero-subtitle">
@@ -671,10 +607,12 @@
             
             <div class="hero-actions">
                 <a href="login.html" class="btn-primary">
-                    <i class="fas fa-sign-in-alt"></i> Login to Vote
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Vote
                 </a>
                 <a href="results.html" class="btn-outline">
-                    <i class="fas fa-chart-bar"></i> View Results
+                    <i class="fas fa-chart-bar"></i>
+                    View Results
                 </a>
             </div>
 
@@ -753,8 +691,12 @@
         // Fetch votes count from database
         async function fetchVotesCount() {
             try {
-                const response = await fetch('/api/results');
+                console.log('Fetching votes...');
+                var apiBaseUrl = window.location.origin;
+                const response = await fetch(apiBaseUrl + '/api/results');
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Full results response:', result);
                 const votesCount = result.totalVotes || 0;
                 console.log('Votes count:', votesCount);
                 document.getElementById('votes-cast').dataset.count = votesCount;
@@ -892,32 +834,6 @@
                 overlay.remove();
             }
         }
-    </script>
-<script>
-        // Typing animation
-        window.onload = function() {
-            const textElement = document.querySelector('.typing-text');
-            if (!textElement) return;
-            
-            const text = "Imperial College of Engineering";
-            let i = 0;
-            
-            function typeWriter() {
-                if (i < text.length) {
-                    textElement.textContent += text.charAt(i);
-                    i++;
-                    setTimeout(typeWriter, 120);
-                } else {
-                    setTimeout(function() {
-                        i = 0;
-                        textElement.textContent = '';
-                        typeWriter();
-                    }, 3000);
-                }
-            }
-            
-            typeWriter();
-        };
     </script>
 </body>
 </html>
