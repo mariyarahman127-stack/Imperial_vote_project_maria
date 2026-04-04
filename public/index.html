@@ -259,6 +259,14 @@
 
         .typing-text {
             color: var(--primary);
+            font-size: 3rem;
+            font-weight: 700;
+            display: inline;
+        }
+        
+        .typing-text::after {
+            content: '|';
+            animation: blink 1s infinite;
         }
 
         .cursor {
@@ -872,32 +880,30 @@
         }
     </script>
 <script>
-        // Typing animation for "Imperial College of Engineering"
-        document.addEventListener('DOMContentLoaded', function() {
+        // Typing animation
+        window.onload = function() {
             const textElement = document.querySelector('.typing-text');
             if (!textElement) return;
             
             const text = "Imperial College of Engineering";
-            let index = 0;
+            let i = 0;
             
-            function typeText() {
-                if (index < text.length) {
-                    textElement.textContent += text.charAt(index);
-                    index++;
-                    setTimeout(typeText, 150);
+            function typeWriter() {
+                if (i < text.length) {
+                    textElement.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 120);
                 } else {
-                    // Wait 3 seconds, then restart typing
-                    setTimeout(() => {
-                        index = 0;
+                    setTimeout(function() {
+                        i = 0;
                         textElement.textContent = '';
-                        setTimeout(typeText, 500);
+                        typeWriter();
                     }, 3000);
                 }
             }
             
-            // Start typing when page loads
-            typeText();
-        });
+            typeWriter();
+        };
     </script>
 </body>
 </html>
