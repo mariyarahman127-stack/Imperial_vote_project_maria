@@ -7,8 +7,10 @@
     <meta id="redirect-meta" http-equiv="refresh" content="999;url=">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
     <script src="js/firebase-service.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -174,6 +176,23 @@
             font-size: 12px;
             margin: 15px 0;
         }
+        .already-voted {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .already-voted h3 {
+            color: #10b981;
+            margin-bottom: 15px;
+        }
+        .already-voted p {
+            color: #666;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -182,6 +201,13 @@
             <h1>Imperial College of Engineering</h1>
             <p>College President Election 2026</p>
             <div class="user-info" id="user-info">Loading...</div>
+        </div>
+        
+        <div id="already-voted" class="already-voted">
+            <h3>✓ You Have Already Voted!</h3>
+            <p>Your vote has been recorded for: <strong id="voted-candidate"></strong></p>
+            <a href="voter-dashboard.html" class="btn" style="background:#667eea;color:white;">Go to Dashboard</a>
+        </div>
         
         <div id="voting-section" style="display: none;">
             <div id="schedule-status" style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center; color: white; font-size: 14px;"></div>
@@ -191,6 +217,7 @@
                 <button class="btn btn-outline" onclick="logout()">Logout</button>
             </div>
         </div>
+    </div>
     
     <!-- Confirmation Modal -->
     <div class="modal" id="confirm-modal">
@@ -206,6 +233,7 @@
                 <button class="btn btn-outline" onclick="closeModal()" style="background:#eee;color:#333;">Cancel</button>
                 <button class="btn" id="confirm-btn" onclick="confirmVote()" style="background:#667eea;color:white;">Confirm Vote</button>
             </div>
+        </div>
     </div>
     
     <script>
@@ -341,7 +369,6 @@
                         <button class="btn btn-outline" onclick="logout()" style="margin-top: 20px;">Logout</button>
                     </div>
                 `;
-                document.getElementById('voting-section').style.display = 'block';
                 return;
             }
             
@@ -376,28 +403,46 @@
                 return;
             }
             
-            // Show voting section and check with Firebase API to verify voting status
+            // Show voting section and check if user has already voted
             document.getElementById('voting-section').style.display = 'block';
-            checkVotingStatus();
+            await checkVotingStatus();
         }
         
         async function checkVotingStatus() {
             try {
-                const response = await fetch('/api/check-vote/' + encodeURIComponent(currentUser.email));
-                const data = await response.json();
+                // First check Firebase for duplicate vote
+                if (typeof FirebaseService !== 'undefined') {
+                    const hasVoted = await FirebaseService.checkDuplicateVote(currentUser.email);
+                    if (hasVoted) {
+                        // Get vote details
+                        const allVotes = await FirebaseService.getAllVotes();
+                        const userVote = allVotes.find(v => v.userEmail && v.userEmail.toLowerCase() === currentUser.email.toLowerCase());
+                        
+                        if (userVote) {
+                            currentUser.hasVoted = true;
+                            currentUser.votedFor = userVote.candidateSymbol + ' ' + userVote.candidateName;
+                            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                            
+                            document.getElementById('voted-candidate').textContent = currentUser.votedFor;
+                            document.getElementById('already-voted').style.display = 'block';
+                            document.getElementById('voting-section').style.display = 'none';
+                            return;
+                        }
+                    }
+                }
                 
-                if (data.hasVoted) {
-                    // Update localStorage with true status from Firebase
+                // Also check localStorage
+                const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+                const userVote = votes.find(v => v.userEmail && v.userEmail.toLowerCase() === currentUser.email.toLowerCase());
+                
+                if (userVote) {
                     currentUser.hasVoted = true;
-                    currentUser.votedFor = data.votedFor;
+                    currentUser.votedFor = userVote.candidateSymbol + ' ' + userVote.candidateName;
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     
-                    // Show already voted message
+                    document.getElementById('voted-candidate').textContent = currentUser.votedFor;
                     document.getElementById('already-voted').style.display = 'block';
                     document.getElementById('voting-section').style.display = 'none';
-                    if (document.getElementById('voted-candidate')) {
-                        document.getElementById('voted-candidate').textContent = data.votedFor;
-                    }
                 } else {
                     // Show voting options
                     document.getElementById('already-voted').style.display = 'none';
@@ -406,7 +451,7 @@
                 }
             } catch(e) {
                 console.error('Error checking voting status:', e);
-                // Fallback - show voting options but let server handle duplicate check
+                // Fallback - show voting options
                 renderCandidates();
             }
         }
@@ -449,84 +494,96 @@
             selectedCandidate = null;
         }
         
-        function confirmVote() {
+        async function confirmVote() {
             if (!selectedCandidate) return;
             
             const btn = document.getElementById('confirm-btn');
             btn.textContent = 'Submitting...';
             btn.disabled = true;
             
-            // Save vote ID first
-            const voteId = Date.now().toString().slice(-8);
-            
-            // Save to localStorage
-            currentUser.hasVoted = true;
-            currentUser.votedFor = selectedCandidate.symbol + ' ' + selectedCandidate.name + ' - ' + selectedCandidate.department;
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            
-            // Save vote to localStorage
-            const votes = JSON.parse(localStorage.getItem('votes') || '[]');
-            votes.push({
-                id: voteId,
-                userEmail: currentUser.email,
-                candidateId: selectedCandidate.id,
-                candidateName: selectedCandidate.name,
-                candidateSymbol: selectedCandidate.symbol,
-                candidateSymbolName: selectedCandidate.symbolName,
-                candidateDepartment: selectedCandidate.department,
-                timestamp: Date.now(),
-                timestampRaw: Date.now()
-            });
-            localStorage.setItem('votes', JSON.stringify(votes));
-            console.log('Vote saved to localStorage:', voteId);
-            
-            // Save to Firebase Realtime Database
             try {
-                if (window.firebaseDb) {
-                    window.firebaseDb.ref('votes').push().set({
-                        id: voteId,
-                        userEmail: currentUser.email,
-                        candidateId: selectedCandidate.id,
-                        candidateName: selectedCandidate.name,
-                        candidateSymbol: selectedCandidate.symbol,
-                        candidateSymbolName: selectedCandidate.symbolName,
-                        candidateDepartment: selectedCandidate.department,
-                        timestamp: Date.now(),
-                        timestampRaw: Date.now()
-                    }).then(function() {
-                        console.log('Vote saved to Firebase!');
-                    }).catch(function(error) {
-                        console.log('Firebase save error:', error);
-                    });
+                // Save vote ID first
+                const voteId = Date.now().toString().slice(-8);
+                
+                // Prepare vote data
+                const voteData = {
+                    id: voteId,
+                    userEmail: currentUser.email,
+                    candidateId: selectedCandidate.id,
+                    candidateName: selectedCandidate.name,
+                    candidateDepartment: selectedCandidate.department,
+                    candidateSymbol: selectedCandidate.symbol,
+                    candidateSymbolName: selectedCandidate.symbolName,
+                    timestamp: Date.now(),
+                    timestampRaw: Date.now()
+                };
+                
+                // Save to Firebase using FirebaseService
+                if (typeof FirebaseService !== 'undefined') {
+                    console.log('Saving vote to Firebase...');
+                    const result = await FirebaseService.saveVote(voteData);
+                    console.log('Vote saved to Firebase:', result);
+                } else {
+                    console.warn('FirebaseService not available, saving to localStorage only');
                 }
-            } catch(e) {
-                console.log('Firebase error:', e);
-            }
-            
-            // Save vote receipt
-            const voteReceipt = {
-                voteId: voteId,
-                candidateSymbol: selectedCandidate.symbol,
-                candidateName: selectedCandidate.name,
-                candidateDepartment: selectedCandidate.department,
-                timestamp: Date.now()
-            };
-            localStorage.setItem('voteReceipt', JSON.stringify(voteReceipt));
-            
-            // Show success message
-            alert('Vote submitted successfully! Your vote ID is: ' + voteId);
-            
-            // Redirect
-            const baseUrl = window.location.origin;
-            const redirectUrl = baseUrl + '/vote-success.html?id=' + voteId + 
-                '&symbol=' + encodeURIComponent(selectedCandidate.symbol) + 
-                '&name=' + encodeURIComponent(selectedCandidate.name) + 
-                '&dept=' + encodeURIComponent(selectedCandidate.department) + 
-                '&time=' + Date.now();
-            
-            setTimeout(function() {
+                
+                // Also save to localStorage as backup
+                const votes = JSON.parse(localStorage.getItem('votes') || '[]');
+                votes.push(voteData);
+                localStorage.setItem('votes', JSON.stringify(votes));
+                
+                // Save voter information to Firebase 'voters' node
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    try {
+                        const voterData = {
+                            email: currentUser.email,
+                            name: currentUser.name || currentUser.email.split('@')[0],
+                            hasVoted: true,
+                            votedFor: selectedCandidate.symbol + ' ' + selectedCandidate.name,
+                            votedAt: firebase.database.ServerValue.TIMESTAMP,
+                            voteId: voteId
+                        };
+                        
+                        // Use email as key (replace special characters)
+                        const voterKey = currentUser.email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
+                        await firebase.database().ref('voters/' + voterKey).set(voterData);
+                        console.log('Voter information saved to Firebase voters node');
+                    } catch (error) {
+                        console.error('Error saving voter information:', error);
+                    }
+                }
+                
+                // Update user status
+                currentUser.hasVoted = true;
+                currentUser.votedFor = selectedCandidate.symbol + ' ' + selectedCandidate.name;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                // Save vote receipt
+                const voteReceipt = {
+                    voteId: voteId,
+                    candidateSymbol: selectedCandidate.symbol,
+                    candidateName: selectedCandidate.name,
+                    candidateDepartment: selectedCandidate.department,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('voteReceipt', JSON.stringify(voteReceipt));
+                
+                // Show success message
+                alert('Vote submitted successfully! Your vote ID is: ' + voteId);
+                
+                // Redirect
+                const baseUrl = window.location.origin;
+                const redirectUrl = baseUrl + '/vote-success.html?id=' + voteId + 
+                    '&symbol=' + encodeURIComponent(selectedCandidate.symbol) + 
+                    '&name=' + encodeURIComponent(selectedCandidate.name) +
+                    '&dept=' + encodeURIComponent(selectedCandidate.department);
                 window.location.href = redirectUrl;
-            }, 500);
+            } catch (error) {
+                console.error('Error saving vote:', error);
+                alert('Error saving vote. Please try again.');
+                btn.disabled = false;
+                btn.textContent = 'Confirm Vote';
+            }
         }
         
         function logout() {

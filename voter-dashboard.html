@@ -11,6 +11,11 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
     
     <style>
         /* =====================================================
@@ -209,7 +214,7 @@
         /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -477,7 +482,7 @@
                     <i class="fas fa-election"></i>
                     <span>Elections</span>
                 </a>
-                <a href="vote.html?id=1" class="nav-item" id="cast-vote-link" style="display: none;">
+                <a href="vote-with-animation.html?id=1" class="nav-item">
                     <i class="fas fa-vote-yea"></i>
                     <span>Cast Vote</span>
                 </a>
@@ -562,14 +567,56 @@
             ]
         };
         
-        async function checkServerVoteStatus(identifier) {
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Firebase to initialize
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Check if user is authenticated
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().onAuthStateChanged(async function(user) {
+                    if (!user) {
+                        // User is not authenticated, redirect to login
+                        console.log('User not authenticated, redirecting to login');
+                        localStorage.removeItem('currentUser');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    
+                    // User is authenticated, proceed with dashboard
+                    console.log('User authenticated:', user.email);
+                    renderDashboard();
+                });
+            } else {
+                // Fallback to localStorage check
+                const stored = localStorage.getItem('currentUser');
+                if (!stored) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                renderDashboard();
+            }
+            
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    localStorage.removeItem('currentUser');
+                    window.location.href = '/index.html';
+                });
+            }
+        });
+        
+async function checkServerVoteStatus(identifier) {
             try {
+                var apiBaseUrl = window.location.origin;
                 // Check if identifier is studentId or email
                 let studentId = identifier;
                 if (identifier.includes('@')) {
                     studentId = identifier.split('@')[0];
                 }
-                const response = await fetch('/api/check-vote-by-student/' + encodeURIComponent(studentId));
+                const response = await fetch(apiBaseUrl + '/api/check-vote-by-student/' + encodeURIComponent(studentId));
                 const data = await response.json();
                 return data;
             } catch (error) {
@@ -648,88 +695,6 @@
             return userVote ? userVote.id : null;
         }
         
-        // Load voting schedule from Firebase
-        async function loadVotingSchedule() {
-            try {
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
-                    const schedule = snapshot.val();
-                    console.log('Voting schedule loaded from Firebase:', schedule);
-                    
-                    // If Firebase returns null, clear localStorage to prevent stale data
-                    if (!schedule) {
-                        console.log('Firebase returned null, clearing localStorage to prevent stale data');
-                        localStorage.removeItem('votingSchedule');
-                        return null;
-                    }
-                    
-                    localStorage.setItem('votingSchedule', JSON.stringify(schedule));
-                    return schedule;
-                }
-                
-                // Fallback to localStorage ONLY if Firebase is not available
-                const localSchedule = localStorage.getItem('votingSchedule');
-                if (localSchedule) {
-                    console.log('Voting schedule loaded from localStorage (Firebase not available):', localSchedule);
-                    return JSON.parse(localSchedule);
-                }
-            } catch (error) {
-                console.error('Error loading voting schedule:', error);
-            }
-            return null;
-        }
-        
-        // Check if voting is currently allowed
-        function isVotingAllowed(schedule) {
-            if (!schedule) {
-                return { allowed: false, message: 'Voting schedule not available. Please contact administrator.' };
-            }
-            
-            const now = Date.now();
-            const startTime = schedule.startTime;
-            const endTime = schedule.endTime;
-            
-            console.log('Current time (UTC):', new Date(now).toISOString());
-            console.log('Current time (local):', new Date(now).toLocaleString());
-            console.log('Start time (UTC):', new Date(startTime).toISOString());
-            console.log('Start time (local):', new Date(startTime).toLocaleString());
-            console.log('End time (UTC):', new Date(endTime).toISOString());
-            console.log('End time (local):', new Date(endTime).toLocaleString());
-            console.log('Now < startTime:', now < startTime);
-            console.log('Now > endTime:', now > endTime);
-            
-            if (now < startTime) {
-                const timeUntilStart = startTime - now;
-                const hours = Math.floor(timeUntilStart / (1000 * 60 * 60));
-                const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
-                return {
-                    allowed: false,
-                    message: `Voting has not started yet. Voting begins in ${hours}h ${minutes}m.`,
-                    startTime: startTime,
-                    endTime: endTime
-                };
-            }
-            
-            if (now > endTime) {
-                return {
-                    allowed: false,
-                    message: 'Voting has ended.',
-                    startTime: startTime,
-                    endTime: endTime
-                };
-            }
-            
-            const timeUntilEnd = endTime - now;
-            const hours = Math.floor(timeUntilEnd / (1000 * 60 * 60));
-            const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
-            return {
-                allowed: true,
-                message: `Voting is active. Time remaining: ${hours}h ${minutes}m`,
-                startTime: startTime,
-                endTime: endTime
-            };
-        }
-        
         async function renderDashboard() {
             const stored = localStorage.getItem('currentUser');
             if (stored) {
@@ -782,155 +747,23 @@
                     </div>
                 `;
             } else {
-                // Load voting schedule and check if voting is allowed
-                const schedule = await loadVotingSchedule();
-                
-                // CRITICAL: Check if schedule is null FIRST before any other checks
-                if (!schedule) {
-                    console.error('Voting schedule is null or undefined!');
-                    statusContainer.innerHTML = `
-                        <div class="vote-status">
-                            <div class="vote-status-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--danger);">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <h4>Configuration Error</h4>
-                            <p style="color: var(--text-secondary);">Voting schedule is not configured. Please contact administrator.</p>
+                statusContainer.innerHTML = `
+                    <div class="vote-status">
+                        <div class="vote-status-icon">
+                            <i class="fas fa-vote-yea"></i>
                         </div>
-                    `;
-                    return;
-                }
-                
-                const votingStatus = isVotingAllowed(schedule);
-                
-                // Show/hide the Cast Vote sidebar link based on voting status
-                const castVoteLink = document.getElementById('cast-vote-link');
-                if (castVoteLink) {
-                    castVoteLink.style.display = votingStatus.allowed ? 'flex' : 'none';
-                }
-                
-                if (votingStatus.allowed) {
-                    statusContainer.innerHTML = `
-                        <div class="vote-status">
-                            <div class="vote-status-icon">
+                        <h4>Vote for President</h4>
+                        <p>5 candidates are running for President</p>
+                        <div class="action-buttons">
+                            <a href="vote-with-animation.html?id=1" class="btn-primary">
                                 <i class="fas fa-vote-yea"></i>
-                            </div>
-                            <h4>Vote for President</h4>
-                            <p>5 candidates are running for President</p>
-                            <div class="action-buttons">
-                                <a href="vote.html?id=1" class="btn-primary">
-                                    <i class="fas fa-vote-yea"></i>
-                                    Cast Your Vote Now
-                                </a>
-                            </div>
+                                Cast Your Vote Now
+                            </a>
                         </div>
-                    `;
-                } else {
-                    statusContainer.innerHTML = `
-                        <div class="vote-status">
-                            <div class="vote-status-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <h4>Voting Not Available</h4>
-                            <p style="color: var(--text-secondary);">${votingStatus.message}</p>
-                            ${votingStatus.startTime ? `<p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">Scheduled: ${new Date(votingStatus.startTime).toLocaleString()} - ${new Date(votingStatus.endTime).toLocaleString()}</p>` : ''}
-                        </div>
-                    `;
-                }
-            }
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            renderDashboard();
-            
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    localStorage.removeItem('currentUser');
-                    window.location.href = 'index.html';
-                });
-            }
-
-            // Intercept Results link in sidebar to show message
-            const resultsLinks = document.querySelectorAll('a[href*="results.html"]');
-            resultsLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showResultsNotAvailable();
-                });
-            });
-        });
-
-        function showResultsNotAvailable() {
-            // Create modal overlay
-            const overlay = document.createElement('div');
-            overlay.id = 'results-modal-overlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                backdrop-filter: blur(4px);
-            `;
-
-            // Create modal content
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                background: white;
-                border-radius: 16px;
-                max-width: 420px;
-                width: 90%;
-                padding: 2rem;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-                text-align: center;
-            `;
-
-            modal.innerHTML = `
-                <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
-                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 1.5rem;">Results Not Available</h2>
-                <p style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Only administrators can view election results.</p>
-                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Results will be published after the election ends</p>
-                <button onclick="closeResultsModal()" style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    padding: 0.75rem 1.5rem;
-                    background: #2563eb;
-                    color: white;
-                    font-family: 'Poppins', sans-serif;
-                    font-size: 0.95rem;
-                    font-weight: 600;
-                    border-radius: 12px;
-                    border: none;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">OK</button>
-            `;
-
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-
-            // Close on overlay click
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) {
-                    closeResultsModal();
-                }
-            });
-        }
-
-        function closeResultsModal() {
-            const overlay = document.getElementById('results-modal-overlay');
-            if (overlay) {
-                overlay.remove();
+                    </div>
+                `;
             }
         }
     </script>
 </body>
 </html>
-

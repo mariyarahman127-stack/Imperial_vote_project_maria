@@ -10,8 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
     <script src="js/firebase-service.js"></script>
     <style>
         :root { --primary: #2563eb; --primary-dark: #1d4ed8; --success: #10b981; --surface: #ffffff; --text-primary: #1e293b; --text-secondary: #64748b; --text-muted: #94a3b8; --border: #e2e8f0; --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1); --radius-md: 12px; --radius-xl: 24px; --transition: all 0.3s ease; }
@@ -38,6 +40,24 @@
         .admin-link, .back-link { margin-top: 1.5rem; text-align: center; }
         .admin-link a, .back-link a { color: var(--text-secondary); font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .admin-link a:hover, .back-link a:hover { color: var(--primary); }
+        
+        /* Password Toggle Styles */
+        .password-wrapper { position: relative; width: 100%; }
+        .password-wrapper .form-input { padding-right: 3rem; }
+        .password-toggle {
+            position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: var(--text-muted);
+            font-size: 1rem; transition: var(--transition); padding: 0;
+        }
+        .password-toggle:hover { color: var(--primary); }
+        .password-toggle i { display: block; }
+        .password-toggle .fa-eye-slash { display: none; }
+        .password-toggle.active .fa-eye { display: none; }
+        .password-toggle.active .fa-eye-slash { display: block; }
+        
+        /* Error message styles */
+        .error-message { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none; }
+        .error-message.show { display: block; }
     </style>
 </head>
 <body>
@@ -53,10 +73,18 @@
                 <div class="form-group">
                     <label class="form-label">University Email / Student ID</label>
                     <input type="text" id="email" class="form-input" placeholder="e.g., 19131@imperial.edu.bd" required>
+                    <div id="email-error" class="error-message"></div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" class="form-input" placeholder="Enter password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                            <i class="fas fa-eye"></i>
+                            <i class="fas fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <div id="password-error" class="error-message"></div>
                 </div>
                 <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
                     <a href="forgot-password.html" style="color: #667eea; font-size: 0.875rem; text-decoration: none;">Forgot Password?</a>
@@ -72,29 +100,32 @@
         </div>
     </div>
     <script>
+        function togglePassword(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.classList.add('active');
+            } else {
+                input.type = 'password';
+                btn.classList.remove('active');
+            }
+        }
+
         function isValidUniversityEmail(email) {
             if (!email) return false;
             var emailRegex = /^[0-9]+@imperial\.edu\.bd$/i;
             return emailRegex.test(email);
         }
         
-        async function checkVotingStatus(email) {
-            try {
-                if (typeof FirebaseService !== 'undefined') {
-                    var hasVoted = await FirebaseService.checkDuplicateVote(email);
-                    if (hasVoted) {
-                        var allVotes = await FirebaseService.getAllVotes();
-                        var userVote = allVotes.find(function(v) { return v.userEmail && v.userEmail.toLowerCase() === email.toLowerCase(); });
-                        return { hasVoted: true, votedFor: userVote ? userVote.candidateSymbol + ' ' + userVote.candidateName : null };
-                    }
-                    return { hasVoted: false, votedFor: null };
-                }
-            } catch (error) {
-                console.error('Error checking voting status:', error);
-            }
-            var localVotes = JSON.parse(localStorage.getItem('votes') || '[]');
-            var localVote = localVotes.find(function(v) { return v.userEmail && v.userEmail.toLowerCase() === email.toLowerCase(); });
-            return { hasVoted: !!localVote, votedFor: localVote ? localVote.candidateSymbol + ' ' + localVote.candidateName : null };
+        function showError(elementId, message) {
+            var errorDiv = document.getElementById(elementId);
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+        
+        function hideError(elementId) {
+            var errorDiv = document.getElementById(elementId);
+            errorDiv.classList.remove('show');
         }
 
         document.getElementById('login-form').addEventListener('submit', async function(e) {
@@ -103,24 +134,46 @@
             var password = document.getElementById('password').value;
             var submitBtn = this.querySelector('button[type="submit"]');
             
-            if (!email || !password) { alert('Please enter email and password'); return; }
-            if (!isValidUniversityEmail(email)) { alert('Invalid email format. Use: ID@imperial.edu.bd'); return; }
+            // Clear previous errors
+            hideError('email-error');
+            hideError('password-error');
+            
+            if (!email || !password) {
+                alert('Please enter email and password');
+                return;
+            }
+            
+            // Extract student ID from email (e.g., "19131" from "19131@imperial.edu.bd")
+            var studentId = email.split('@')[0];
+            
+            if (!studentId || !/^\d+$/.test(studentId)) {
+                showError('email-error', 'Invalid email format. Use: digits@imperial.edu.bd');
+                return;
+            }
             
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
             
             try {
-                // Extract student ID from email (e.g., "19131" from "19131@imperial.edu.bd")
+                // Extract student ID from email
                 var studentId = email.split('@')[0];
                 
-                // Call the API for login
-                var response = await fetch('/api/login', {
+                // Get API base URL (works for both local and Vercel)
+                var apiBaseUrl = window.location.origin;
+                
+                // Use server API for login (not Firebase Auth - that needs setup)
+                var response = await fetch(apiBaseUrl + '/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, studentId: studentId, password: password })
+                    body: JSON.stringify({ 
+                        email: email, 
+                        studentId: studentId, 
+                        password: password
+                    })
                 });
                 
                 var result = await response.json();
+                console.log('Login result:', result);
                 
                 if (result.success) {
                     // Store user info in localStorage
@@ -133,7 +186,14 @@
                         window.location.href = '/voter-dashboard.html';
                     }
                 } else {
-                    alert(result.message || 'Login failed. Please try again.');
+                    // Show error message
+                    if (result.message && result.message.includes('Incorrect password')) {
+                        showError('password-error', result.message);
+                    } else if (result.message && result.message.includes('Not registered')) {
+                        showError('email-error', result.message);
+                    } else {
+                        alert(result.message || 'Login failed. Please try again.');
+                    }
                 }
             } catch (error) {
                 console.error('Login error:', error);
@@ -146,4 +206,3 @@
     </script>
 </body>
 </html>
-

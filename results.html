@@ -258,10 +258,10 @@
 
         .result-symbol-name {
             font-size: 0.7rem;
-            color: #10b981;
+            color: var(--primary);
             font-weight: 600;
             text-transform: uppercase;
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(37, 99, 235, 0.1);
             padding: 0.2rem 0.5rem;
             border-radius: 20px;
         }
@@ -328,7 +328,7 @@
         }
     </style>
 </head>
-<body data-page="results">
+<body>
     <div class="dashboard-layout">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -410,7 +410,8 @@
 
         async function loadResults() {
             try {
-                const response = await fetch('/api/results');
+                var apiBaseUrl = window.location.origin;
+                const response = await fetch(apiBaseUrl + '/api/results');
                 if (response.ok) { resultsData = await response.json(); }
             } catch (error) { resultsData = { candidates: [], totalVotes: 0 }; }
         }
@@ -438,7 +439,7 @@
                     sorted.forEach((c, i) => {
                         const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
                         const rankClass = i === 0 ? 'first' : '';
-                        html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i+1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + ' <span class="result-symbol-name">(' + c.symbolName + ')</span></div><div class="result-dept">' + c.department + '</div><div class="result-progress"><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
+                        html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i+1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + '<span class="result-symbol-name">' + c.symbolName + '</span></div><div class="result-dept">' + c.department + '</div><div class="result-progress"><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
                     });
                 }
             }
@@ -446,7 +447,7 @@
             document.getElementById('results-container').innerHTML = html;
         }
 
-        function logout() { localStorage.removeItem('currentUser'); window.location.href = '/login.html'; }
+        function logout() { localStorage.removeItem('currentUser'); window.location.href = 'login.html'; }
         document.getElementById('logout-btn').addEventListener('click', logout);
         checkAuth();
         renderResults();

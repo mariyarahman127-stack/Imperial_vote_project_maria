@@ -1,0 +1,18 @@
+{
+  "name": "ice-voting-system",
+  "version": "1.0.0",
+  "description": "ICE Voting System - College Election Platform",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "build": "echo 'No build step required for Vercel'"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "firebase-admin": "^12.7.0",
+    "localtunnel": "^2.0.2",
+    "uuid": "^9.0.0"
+  }
+}

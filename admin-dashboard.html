@@ -11,6 +11,13 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
+    <script src="js/firebase-service.js"></script>
     
     <style>
         :root {
@@ -103,11 +110,47 @@
             color: white;
         }
 
-        .nav-item i { width: 20px; text-align: center; }
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
 
         .sidebar-footer {
             border-top: 1px solid var(--border);
             padding-top: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface-alt);
+            border-radius: var(--radius-md);
+            margin-bottom: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-details h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .user-details p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
         }
 
         .btn-logout {
@@ -150,21 +193,14 @@
             margin-bottom: 0.25rem;
         }
 
-        .dashboard-subtitle {
+        .dashboard-subtitle {\n            color: var(--text-secondary);\n            font-size: 0.95rem;\n            animation: pulse 2s ease-in-out infinite;\n        }\n\n        @keyframes pulse {\n            0%, 100% {\n                opacity: 1;\n                transform: scale(1);\n            }\n            50% {\n                opacity: 0.7;\n                transform: scale(1.02);\n            }\n        }
             color: var(--text-secondary);
             font-size: 0.95rem;
         }
 
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
         .stats-grid {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(4, 1fr);
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -175,18 +211,49 @@
             padding: 1.5rem;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
-            text-align: center;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(37, 99, 235, 0.1);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--danger);
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            color: var(--primary);
             margin-bottom: 0.25rem;
         }
 
         .stat-value.success { color: var(--success); }
-        .stat-value.warning { color: var(--warning); }
 
         .stat-label {
             color: var(--text-secondary);
@@ -203,184 +270,200 @@
         }
 
         .card-header {
-            padding: 1.25rem 1.5rem;
+            padding: 1.5rem;
             border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
 
         .card-header h3 {
-            font-size: 1.125rem;
+            font-size: 1.25rem;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
 
-        .card-header i { color: var(--primary); }
-
-        .card-body { padding: 1.5rem; }
-
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1rem;
-            background: var(--primary);
-            color: white;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            border: none;
-            cursor: pointer;
-            transition: var(--transition);
+        .card-body {
+            padding: 2rem;
         }
 
-        .btn-primary:hover { background: var(--primary-dark); }
-
-        .btn-outline {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1rem;
-            background: transparent;
-            color: var(--primary);
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            border: 2px solid var(--primary);
-            cursor: pointer;
-            transition: var(--transition);
+        .results-container {
+            display: grid;
+            gap: 1rem;
         }
-
-        .btn-outline:hover { background: var(--primary); color: white; }
-
-        .btn-danger {
-            color: #dc2626;
-            border-color: #dc2626;
-        }
-
-        .btn-danger:hover { background: #dc2626; color: white; }
 
         .result-item {
             display: flex;
             align-items: center;
+            gap: 1rem;
             padding: 1rem;
             background: var(--surface-alt);
             border-radius: var(--radius-md);
-            margin-bottom: 1rem;
             border: 1px solid var(--border);
         }
 
-        .result-item:last-child { margin-bottom: 0; }
-
         .result-rank {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
             font-weight: 700;
-            color: white;
-            margin-right: 1rem;
-            flex-shrink: 0;
+            font-size: 1.1rem;
         }
 
-        .result-rank.first { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .result-rank.first {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
 
         .result-symbol {
-            width: 50px;
-            height: 50px;
-            background: var(--surface);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            border: 2px solid var(--border);
-            margin-right: 1rem;
-            flex-shrink: 0;
+            font-size: 2rem;
         }
 
-        .result-info { flex: 1; }
+        .result-info {
+            flex: 1;
+        }
 
         .result-name {
-            font-size: 1rem;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .result-symbol-name {
-            font-size: 0.65rem;
             color: #10b981;
-            color: var(--primary);
-            font-weight: 600;
-            text-transform: uppercase;
-            background: rgba(37, 99, 235, 0.1);
-            padding: 0.2rem 0.5rem;
-            border-radius: 20px;
+            font-size: 0.875rem;
         }
 
-        .result-dept { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .result-dept {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
 
         .progress-bar {
-            height: 6px;
+            height: 8px;
             background: var(--border);
-            border-radius: 3px;
-            overflow: hidden;
+            border-radius: 4px;
             margin-top: 0.5rem;
+            overflow: hidden;
         }
 
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--primary), var(--primary-light));
-            border-radius: 3px;
-            transition: width 1s ease;
+            border-radius: 4px;
+            transition: width 0.5s ease;
         }
 
-        .result-stats { display: flex; align-items: center; gap: 1rem; margin-left: 1rem; }
+        .result-stats {
+            text-align: right;
+        }
 
-        .result-votes { font-size: 0.85rem; color: var(--text-secondary); min-width: 70px; text-align: right; }
-        .result-percentage { font-size: 1.25rem; font-weight: 700; color: var(--primary); min-width: 50px; text-align: right; }
+        .result-votes {
+            font-weight: 600;
+            color: var(--primary);
+        }
 
-        .table-container { overflow-x: auto; }
+        .result-percentage {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
 
-        table { width: 100%; border-collapse: collapse; }
+        .table-container {
+            overflow-x: auto;
+        }
 
-        th, td { padding: 0.875rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-        th { font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
-        td { color: var(--text-primary); }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
 
-        tr:hover { background: var(--surface-alt); }
+        th {
+            background: var(--surface-alt);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
 
-        .vote-id { font-family: 'Courier New', monospace; font-weight: 700; color: var(--primary); }
+        td {
+            font-size: 0.9rem;
+        }
+
+        .vote-id {
+            font-family: 'Courier New', monospace;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #00ffff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
 
         @media (max-width: 992px) {
-            .sidebar { transform: translateX(-100%); }
-            .sidebar.active { transform: translateX(0); }
-            .main-content { margin-left: 0; }
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            .page-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
-            .card-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
-            .result-item { flex-wrap: wrap; }
-            .result-stats { width: 100%; margin-left: 0; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); justify-content: space-between; }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="dashboard-layout">
+        <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="index.html" class="logo">
@@ -388,17 +471,23 @@
                     <span>UniVote</span>
                 </a>
             </div>
+
             <nav class="sidebar-nav">
                 <a href="admin-dashboard.html" class="nav-item active">
                     <i class="fas fa-th-large"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="results.html" class="nav-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Results</span>
-                </a>
+
             </nav>
+
             <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar">AD</div>
+                    <div class="user-details">
+                        <h4 id="user-name">Administrator</h4>
+                        <p>Admin</p>
+                    </div>
+                </div>
                 <button class="btn-logout" id="logout-btn">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout
@@ -406,65 +495,80 @@
             </div>
         </aside>
 
+        <!-- Main Content -->
         <main class="main-content">
-            <div class="page-header">
-                <div>
-                    <h1 class="dashboard-title">Admin Dashboard</h1>
-                    <p class="dashboard-subtitle">Imperial College of Engineering - College President Election 2026</p>
-                </div>
-                <button class="btn-outline" onclick="renderResults()">
-                    <i class="fas fa-sync-alt"></i>
-                    Refresh
-                </button>
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Admin Dashboard</h1>
+                <p class="dashboard-subtitle" style="color: #10b981;">Imperial College of Engineering - Election Management</p>
             </div>
 
+            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <div class="stat-value" id="votes-cast">0</div>
+                    <div class="stat-label">Votes Cast</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-value success" id="turnout">0%</div>
+                    <div class="stat-label">Voter Turnout</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Candidates</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon danger">
+                        <i class="fas fa-users"></i>
+                    </div>
                     <div class="stat-value" id="total-voters">500</div>
                     <div class="stat-label">Total Voters</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value success" id="votes-cast">0</div>
-                    <div class="stat-label">Votes Cast</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value warning" id="turnout">0%</div>
-                    <div class="stat-label">Voter Turnout</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="candidates">5</div>
-                    <div class="stat-label">Candidates</div>
-                </div>
             </div>
 
+            <!-- Voting Schedule Card -->
             <div class="main-card">
                 <div class="card-header">
-                    <h3><i class="fas fa-calendar-alt"></i> Voting Schedule</h3>
+                    <h3>
+                        <i class="fas fa-calendar-alt" style="color: var(--primary);"></i>
+                        Voting Schedule
+                    </h3>
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="btn-primary" onclick="saveSchedule()">
+                        <button class="btn-primary" id="save-schedule-btn">
                             <i class="fas fa-save"></i> Save Schedule
                         </button>
-                        <button class="btn-danger" onclick="clearSchedule()">
+                        <button class="btn-danger" id="clear-schedule-btn">
                             <i class="fas fa-trash"></i> Clear Schedule
                         </button>
                     </div>
                 </div>
                 <div class="card-body">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                        <div>
-                            <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                        <div class="form-group">
+                            <label class="form-label">
                                 <i class="fas fa-play-circle" style="color: var(--success);"></i> Voting Start Date & Time
                             </label>
-                            <input type="datetime-local" id="schedule-start" class="form-input" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-size: 0.95rem;">
+                            <input type="datetime-local" id="schedule-start" class="form-input">
                         </div>
-                        <div>
-                            <label class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                        <div class="form-group">
+                            <label class="form-label">
                                 <i class="fas fa-stop-circle" style="color: var(--danger);"></i> Voting End Date & Time
                             </label>
-                            <input type="datetime-local" id="schedule-end" class="form-input" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius-md); font-size: 0.95rem;">
+                            <input type="datetime-local" id="schedule-end" class="form-input">
                         </div>
                     </div>
-                    <div id="schedule-status" style="margin-top: 1.5rem; padding: 1rem; background: var(--surface-alt); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                    <div id="schedule-status" style="margin-top: 1rem; padding: 1rem; background: var(--surface-alt); border-radius: var(--radius-md); border: 1px solid var(--border);">
                         <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
                             <i class="fas fa-info-circle"></i> Set the voting schedule. Students will only be able to vote during the scheduled period.
                         </p>
@@ -472,22 +576,28 @@
                 </div>
             </div>
 
+            <!-- Results Card -->
             <div class="main-card">
                 <div class="card-header">
-                    <h3><i class="fas fa-chart-bar"></i> Election Results</h3>
+                    <h3>
+                        <i class="fas fa-chart-bar" style="color: var(--primary);"></i>
+                        Election Results
+                    </h3>
                 </div>
                 <div class="card-body">
-                    <div id="results-container"></div>
+                    <div class="results-container" id="results-container">
+                        <!-- Results will be loaded here -->
+                    </div>
                 </div>
             </div>
 
+            <!-- Voting Records Card -->
             <div class="main-card">
                 <div class="card-header">
-                    <h3><i class="fas fa-list"></i> Voting Records</h3>
-                    <button class="btn-outline btn-danger" onclick="clearAllVotes()">
-                        <i class="fas fa-trash-alt"></i>
-                        Reset All Votes
-                    </button>
+                    <h3>
+                        <i class="fas fa-list-alt" style="color: var(--primary);"></i>
+                        Voting Records
+                    </h3>
                 </div>
                 <div class="card-body">
                     <div class="table-container">
@@ -495,16 +605,18 @@
                             <thead>
                                 <tr>
                                     <th>#</th>
-                                    <th>Email</th>
+                                    <th>Voter Email</th>
                                     <th>Symbol</th>
                                     <th>Symbol Name</th>
                                     <th>Candidate</th>
                                     <th>Department</th>
                                     <th>Time</th>
-                                    <th>Vote Receipt ID</th>
+                                    <th>Receipt ID</th>
                                 </tr>
                             </thead>
-                            <tbody id="voting-records"></tbody>
+                            <tbody id="voting-records">
+                                <!-- Records will be loaded here -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -513,113 +625,150 @@
     </div>
 
     <script>
-        const totalVoters = 500;
         let allVotes = [];
-        let resultsData = null;
+        let totalVoters = 500;
+        let resultsData = { candidates: [], totalVotes: 0 };
         let votesListenerActive = false;
 
-        // Calculate results from votes
-        function calculateResults(votes) {
-            const candidates = [
-                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book', votes: 0 },
-                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose', votes: 0 },
-                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane', votes: 0 },
-                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango', votes: 0 },
-                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot', votes: 0 }
-            ];
-            
-            votes.forEach(v => {
-                const candidate = candidates.find(c => c.id === v.candidateId);
-                if (candidate) {
-                    candidate.votes++;
-                }
-            });
-            
-            return { candidates, totalVotes: votes.length };
-        }
+        const election = {
+            id: 1,
+            title: 'President Election 2026',
+            candidates: [
+                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
+                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
+                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
+                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
+                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' },
+            ]
+        };
 
-        function setupRealtimeListener() {
-            if (votesListenerActive) {
-                console.log('Real-time listener already active');
-                return;
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for Firebase to initialize
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // First check if it's hardcoded admin in localStorage
+            const stored = localStorage.getItem('currentUser');
+            if (stored) {
+                const userData = JSON.parse(stored);
+                if (userData.role === 'admin' && userData.email === 'admin@ice.edu') {
+                    // Hardcoded admin - allow access without Firebase authentication
+                    console.log('Hardcoded admin detected, allowing access');
+                    renderResults();
+                    return;
+                }
             }
             
-            // Try to use Firebase SDK for real-time listening
-            try {
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    if (firebase.apps.length === 0) {
-                        firebase.initializeApp({
-                            apiKey: "AIzaSyA6wYd8QJ_fRpi4jFT9PAEsdj7sKZO7Fno",
-                            authDomain: "univote1-59bd1.firebaseapp.com",
-                            databaseURL: "https://univote1-59bd1-default-rtdb.asia-southeast1.firebasedatabase.app/",
-                            projectId: "univote1-59bd1",
-                            storageBucket: "univote1-59bd1.firebasestorage.app",
-                            messagingSenderId: "171480179267",
-                            appId: "1:171480179267:web:9bab916dc182b643b9eaf6"
-                        });
+            // Check if user is authenticated with Firebase
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                firebase.auth().onAuthStateChanged(async function(user) {
+                    if (!user) {
+                        // User is not authenticated, redirect to login
+                        console.log('User not authenticated, redirecting to login');
+                        localStorage.removeItem('currentUser');
+                        window.location.href = 'login.html';
+                        return;
                     }
                     
-                    console.log('Setting up real-time listener for votes...');
-                    firebase.database().ref('votes').orderByChild('timestampRaw').on('value', (snapshot) => {
-                        const votes = [];
-                        if (snapshot.exists()) {
-                            snapshot.forEach(childSnapshot => {
-                                const vote = childSnapshot.val();
-                                // Preserve the original 8-digit receipt ID from vote data
-                                // If id doesn't exist, use Firebase key as fallback
-                                if (!vote.id) {
-                                    vote.id = childSnapshot.key;
-                                }
-                                votes.push(vote);
-                            });
-                        }
-                        // Sort by timestamp descending
-                        allVotes = votes.sort((a, b) => (b.timestampRaw || 0) - (a.timestampRaw || 0));
-                        console.log('Real-time update received:', allVotes.length, 'votes');
-                        // Sync localStorage with Firebase
-                        localStorage.setItem('votes', JSON.stringify(allVotes));
-                        updateDashboard();
-                    });
-                    votesListenerActive = true;
-                } else {
-                    console.log('Firebase SDK not available, using polling');
-                    // Fallback to polling if Firebase SDK is not available
-                    setInterval(renderResults, 5000);
+                    // Check if user has admin role by looking in 'Administration/admin' node
+                    const userSnapshot = await firebase.database().ref('Administration/admin').once('value');
+                    const userData = userSnapshot.val();
+                    
+                    if (userData && userData.role === 'admin' && userData.uid === user.uid) {
+                        // User is authenticated and is admin, proceed with dashboard
+                        console.log('Admin authenticated:', user.email);
+                        renderResults();
+                    } else {
+                        alert('Access denied. Admin privileges required.');
+                        localStorage.removeItem('currentUser');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                });
+            } else {
+                // Fallback to localStorage check
+                if (!stored) {
+                    window.location.href = 'login.html';
+                    return;
                 }
-            } catch (error) {
-                console.error('Error setting up real-time listener:', error);
-                // Fallback to polling
-                setInterval(renderResults, 5000);
+                const user = JSON.parse(stored);
+                if (user.role !== 'admin') {
+                    alert('Access denied. Admin only.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+                renderResults();
             }
+            
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    localStorage.removeItem('currentUser');
+                    window.location.href = '/index.html';
+                });
+            }
+            
+            const resetBtn = document.getElementById('reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', clearAllVotes);
+            }
+            
+            // Setup real-time listener for automatic updates
+            setupRealtimeListener();
+        });
+
+        function calculateResults(votes) {
+            const results = {};
+            election.candidates.forEach(c => {
+                results[c.id] = {
+                    id: c.id,
+                    name: c.name,
+                    department: c.department,
+                    symbol: c.symbol,
+                    symbolName: c.symbolName,
+                    votes: 0
+                };
+            });
+
+            votes.forEach(v => {
+                if (v.candidateId && results[v.candidateId]) {
+                    results[v.candidateId].votes++;
+                }
+            });
+
+            return {
+                candidates: Object.values(results),
+                totalVotes: votes.length
+            };
         }
 
         async function loadResults() {
-            // First try to load from API (most reliable)
-            try {
-                const response = await fetch('/api/admin/votes');
-                if (response.ok) {
-                    const votesData = await response.json();
-                    if (votesData && Array.isArray(votesData)) {
-                        allVotes = votesData;
-                        console.log('Loaded from API:', allVotes.length);
-                        // Sync localStorage with API data
+            // First try to load from Firebase using FirebaseService
+            if (typeof FirebaseService !== 'undefined') {
+                try {
+                    const votes = await FirebaseService.getAllVotes();
+                    if (votes && Array.isArray(votes)) {
+                        allVotes = votes;
+                        console.log('Loaded from Firebase:', allVotes.length);
+                        // Clear localStorage to sync with Firebase
                         localStorage.setItem('votes', JSON.stringify(allVotes));
-                        return; // Success - no need to try other methods
+                        return;
                     }
+                } catch(e) {
+                    console.log('FirebaseService load error:', e);
                 }
-            } catch(e) {
-                console.log('API load error:', e);
             }
             
-            // Fallback: try Firebase SDK
+            // Fallback: try Firebase SDK directly
             try {
-                // Load Firebase SDK
                 if (typeof firebase !== 'undefined' && firebase.database) {
                     if (firebase.apps.length === 0) {
                         firebase.initializeApp({
                             apiKey: "AIzaSyA6wYd8QJ_fRpi4jFT9PAEsdj7sKZO7Fno",
                             authDomain: "univote1-59bd1.firebaseapp.com",
-                            databaseURL: "https://univote1-59bd1-default-rtdb.asia-southeast1.firebasedatabase.app/",
+                            databaseURL: "https://univote1-59bd1-default-rtdb.asia-southeast1.firebasedatabase.app",
                             projectId: "univote1-59bd1",
                             storageBucket: "univote1-59bd1.firebasestorage.app",
                             messagingSenderId: "171480179267",
@@ -633,7 +782,7 @@
                     if (fbData) {
                         allVotes = Object.values(fbData);
                         console.log('Loaded from Firebase SDK:', allVotes.length);
-                        // Sync localStorage with Firebase
+                        // Clear localStorage to sync with Firebase
                         localStorage.setItem('votes', JSON.stringify(allVotes));
                         return;
                     } else {
@@ -666,8 +815,31 @@
             }
         }
 
+        function setupRealtimeListener() {
+            if (votesListenerActive) {
+                console.log('Real-time listener already active');
+                return;
+            }
+            
+            if (typeof FirebaseService !== 'undefined') {
+                console.log('Setting up real-time listener for votes...');
+                FirebaseService.onVotesChange(function(votes) {
+                    console.log('Real-time update received:', votes.length, 'votes');
+                    allVotes = votes;
+                    // Sync localStorage with Firebase
+                    localStorage.setItem('votes', JSON.stringify(allVotes));
+                    updateDashboard();
+                });
+                votesListenerActive = true;
+            } else {
+                console.log('FirebaseService not available, using polling');
+                // Fallback to polling if FirebaseService is not available
+                setInterval(renderResults, 5000);
+            }
+        }
+
         function updateDashboard() {
-            // Calculate results from votes
+            // Use Firebase votes for results
             if (allVotes.length > 0) {
                 resultsData = calculateResults(allVotes);
             } else {
@@ -724,7 +896,16 @@
                     localStorage.removeItem('votes');
                     console.log('Cleared localStorage votes');
                     
-                    const response = await fetch('/api/admin/reset-votes', {
+                    // Clear Firebase votes
+                    if (typeof FirebaseService !== 'undefined') {
+                        await FirebaseService.clearAllVotes();
+                        console.log('Cleared Firebase votes');
+                    }
+                    
+                    // Clear votes from server API
+                    console.log('Calling server API to reset votes...');
+                    var apiBaseUrl = window.location.origin;
+                    const response = await fetch(apiBaseUrl + '/api/admin/reset-votes', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ adminKey: 'admin2026' })
@@ -734,29 +915,32 @@
                     console.log('Server response:', responseData);
                     
                     if (response.ok) {
-                        // Clear the allVotes array to ensure dashboard is reset
-                        allVotes = [];
-                        resultsData = { candidates: [], totalVotes: 0 };
-                        
-                        // Clear Firebase SDK cache by re-initializing
-                        if (typeof firebase !== 'undefined' && firebase.database) {
-                            try {
-                                // Go offline and back online to clear cache
-                                firebase.database().goOffline();
-                                firebase.database().goOnline();
-                                console.log('Firebase cache cleared');
-                            } catch (e) {
-                                console.log('Firebase cache clear error:', e);
-                            }
-                        }
-                        
-                        alert('All votes have been reset!');
-                        // Update dashboard immediately after reset
-                        updateDashboard();
+                        console.log('Cleared server votes');
                     } else {
                         console.error('Server error:', responseData);
                         alert('Error clearing votes: ' + (responseData.message || 'Unknown error'));
+                        return;
                     }
+                    
+                    // Clear the allVotes array to ensure dashboard is reset
+                    allVotes = [];
+                    resultsData = { candidates: [], totalVotes: 0 };
+                    
+                    // Clear Firebase SDK cache by re-initializing
+                    if (typeof firebase !== 'undefined' && firebase.database) {
+                        try {
+                            // Go offline and back online to clear cache
+                            firebase.database().goOffline();
+                            firebase.database().goOnline();
+                            console.log('Firebase cache cleared');
+                        } catch (e) {
+                            console.log('Firebase cache clear error:', e);
+                        }
+                    }
+                    
+                    alert('All votes have been reset!');
+                    // Update dashboard immediately after reset
+                    updateDashboard();
                 } catch (error) {
                     console.error('Error clearing votes:', error);
                     alert('Error clearing votes: ' + error.message);
@@ -764,12 +948,7 @@
             }
         }
 
-        function logout() {
-            localStorage.removeItem('currentUser');
-            window.location.href = 'login.html';
-        }
-
-        // Save voting schedule to Firebase
+        // Voting Schedule Management Functions
         async function saveSchedule() {
             const startTime = document.getElementById('schedule-start').value;
             const endTime = document.getElementById('schedule-end').value;
@@ -818,7 +997,6 @@
             }
         }
 
-        // Load voting schedule from Firebase
         async function loadSchedule() {
             try {
                 let scheduleData = null;
@@ -901,7 +1079,6 @@
             }
         }
 
-        // Format date for datetime-local input
         function formatDateTimeLocal(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -911,7 +1088,6 @@
             return `${year}-${month}-${day}T${hours}:${minutes}`;
         }
 
-        // Update schedule status display
         function updateScheduleStatus(scheduleData) {
             const statusDiv = document.getElementById('schedule-status');
             const now = Date.now();
@@ -939,27 +1115,27 @@
             }
             
             statusDiv.innerHTML = `<p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">${statusHtml}</p>`;
-            statusDiv.style.background = statusClass === 'success' ? 'rgba(16, 185, 129, 0.1)' : statusClass === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+            statusDiv.style.background = statusClass === 'success' ? 'rgba(16, 185, 129, 0.1)' : statusClass === 'warning' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(220, 38, 38, 0.1)';
             statusDiv.style.borderColor = statusClass === 'success' ? 'var(--success)' : statusClass === 'warning' ? 'var(--warning)' : 'var(--danger)';
         }
 
-        function checkAdminAuth() {
-            const stored = localStorage.getItem('currentUser');
-            if (!stored) { window.location.href = 'login.html'; return; }
-            const user = JSON.parse(stored);
-            if (user.role !== 'admin') {
-                alert('Access denied. Admin only.');
-                window.location.href = 'login.html';
+        // Initialize schedule management
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load existing schedule
+            loadSchedule();
+            
+            // Add event listener for save button
+            const saveBtn = document.getElementById('save-schedule-btn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', saveSchedule);
             }
-        }
-
-        document.getElementById('logout-btn').addEventListener('click', logout);
-        checkAdminAuth();
-        renderResults();
-        loadSchedule(); // Load voting schedule on page load
-        // Setup real-time listener for automatic updates
-        setupRealtimeListener();
+            
+            // Add event listener for clear button
+            const clearBtn = document.getElementById('clear-schedule-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', clearSchedule);
+            }
+        });
     </script>
 </body>
 </html>
-

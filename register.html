@@ -4,12 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - UniVote</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-service.js"></script>
+    <script src="js/firebase-service.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -19,11 +29,12 @@
         
         .register-card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border-radius: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             padding: 40px;
             width: 100%;
             max-width: 450px;
+            border: 1px solid #e2e8f0;
         }
         
         .logo {
@@ -33,12 +44,13 @@
         
         .logo h1 {
             font-size: 28px;
-            color: #667eea;
+            color: #2563eb;
             margin-bottom: 5px;
+            font-weight: 700;
         }
         
         .logo p {
-            color: #666;
+            color: #64748b;
             font-size: 14px;
         }
         
@@ -50,44 +62,47 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 500;
-            color: #333;
+            color: #1e293b;
+            font-size: 0.875rem;
         }
         
         .form-group input {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e2e8f0;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 14px;
             transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
         }
         
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
         
         .btn {
             width: 100%;
             padding: 14px;
-            background: #667eea;
+            background: #2563eb;
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
         }
         
         .btn:hover {
-            background: #5a6fd6;
+            background: #1d4ed8;
             transform: translateY(-2px);
         }
         
         .btn:disabled {
-            background: #ccc;
+            background: #94a3b8;
             cursor: not-allowed;
             transform: none;
         }
@@ -95,11 +110,11 @@
         .login-link {
             text-align: center;
             margin-top: 20px;
-            color: #666;
+            color: #64748b;
         }
         
         .login-link a {
-            color: #667eea;
+            color: #2563eb;
             text-decoration: none;
             font-weight: 500;
         }
@@ -111,7 +126,7 @@
         .success-message {
             background: #d1fae5;
             border: 1px solid #10b981;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 15px;
             margin-bottom: 20px;
             text-align: center;
@@ -122,19 +137,41 @@
         .error-message {
             background: #fee2e2;
             border: 1px solid #ef4444;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 15px;
             margin-bottom: 20px;
-            text-color: #991b1b;
+            color: #991b1b;
             display: none;
         }
+        
+        .success-message.show, .error-message.show {
+            display: block;
+        }
+        
+        /* Password Toggle Styles */
+        .password-wrapper { position: relative; width: 100%; }
+        .password-wrapper input { padding-right: 3rem; }
+        .password-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #94a3b8;
+            font-size: 1rem; padding: 0; line-height: 1;
+        }
+        .password-toggle:hover { color: #2563eb; }
+        .password-toggle i { display: block; }
+        .password-toggle .fa-eye-slash { display: none; }
+        .password-toggle.active .fa-eye { display: none; }
+        .password-toggle.active .fa-eye-slash { display: block; }
     </style>
 </head>
-<body data-page="register">
+<body>
     <div class="register-card">
         <div class="logo">
-            <h1>🗳️ UniVote</h1>
-            <p>Create Your Account</p>
+            <a href="index.html" style="text-decoration: none;">
+                <h1><i class="fas fa-vote-yea"></i> UniVote</h1>
+            </a>
+            <p>Imperial College of Engineering</p>
+            <p style="color: #2563eb; font-weight: 500; margin-top: 5px;">College President Election 2026</p>
+            <p style="margin-top: 15px; color: #64748b; font-size: 13px;">Create Your Account</p>
         </div>
 
         <div id="success-message" class="success-message">
@@ -150,21 +187,43 @@
             </div>
 
             <div class="form-group">
+                <label for="studentId">Student ID</label>
+                <input type="text" id="studentId" placeholder="Enter your student ID" required>
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department Name</label>
+                <input type="text" id="department" placeholder="Enter your department name" required>
+            </div>
+
+            <div class="form-group">
                 <label for="email">University Email</label>
                 <input type="email" id="email" placeholder="19131@imperial.edu.bd" required>
             </div>
 
             <div class="form-group">
                 <label for="password">Create Password</label>
-                <input type="password" id="password" placeholder="Create a strong password" required minlength="8">
-                <small style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                    💡 Use at least 8 characters with uppercase, lowercase, numbers & special characters for a strong password
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="Create a strong password" required minlength="8">
+                    <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
+                <small style="color: #64748b; font-size: 12px; margin-top: 5px; display: block;">
+                    Use at least 8 characters with uppercase, lowercase, numbers & special characters
                 </small>
             </div>
 
             <div class="form-group">
                 <label for="confirm-password">Confirm Password</label>
-                <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+                <div class="password-wrapper">
+                    <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+                    <button type="button" class="password-toggle" onclick="togglePassword('confirm-password', this)">
+                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-eye-slash"></i>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" class="btn" id="submit-btn">
@@ -178,9 +237,21 @@
     </div>
 
     <script>
-        document.getElementById('register-form').addEventListener('submit', function(e) {
+        function togglePassword(inputId, btn) {
+            var input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.classList.add('active');
+            } else {
+                input.type = 'password';
+                btn.classList.remove('active');
+            }
+        }
+
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const studentId = document.getElementById('studentId').value.trim();
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.toLowerCase().trim();
             const password = document.getElementById('password').value;
@@ -193,6 +264,20 @@
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
             
+            // Validate student ID
+            if (!studentId || !/^\d+$/.test(studentId)) {
+                errorMessage.textContent = 'Student ID must be digits only';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            // Validate department
+            const department = document.getElementById('department').value.trim();
+            if (!department || department.length < 2) {
+                errorMessage.textContent = 'Please enter your department name';
+                errorMessage.style.display = 'block';
+                return;
+            }
             // Validate email format
             const emailRegex = /^[0-9]{5}@imperial\.edu\.bd$/i;
             if (!emailRegex.test(email)) {
@@ -235,22 +320,26 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Creating Account...';
             
-            // Call the API for registration
-            fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: email,
-                    name: name,
-                    studentId: '',
-                    department: '',
-                    password: password
-                })
-            })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(result) {
+            try {
+                // Get API base URL (works for both local and Vercel)
+                var apiBaseUrl = window.location.origin;
+                
+                // Use server API for registration (no Firebase Auth needed)
+                const response = await fetch(apiBaseUrl + '/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        name: name,
+                        studentId: studentId,
+                        department: department,
+                        password: password
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Register result:', result);
+                
                 if (result.success) {
                     // Show success
                     successMessage.style.display = 'block';
@@ -261,21 +350,21 @@
                         window.location.href = '/login.html';
                     }, 2000);
                 } else {
-                    errorMessage.textContent = result.message || 'Registration failed';
+                    // Show error message
+                    errorMessage.textContent = result.message || result.error || 'Registration failed';
                     errorMessage.style.display = 'block';
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Create Account';
                 }
-            })
-            .catch(function(error) {
+                
+            } catch (error) {
                 console.error('Registration error:', error);
                 errorMessage.textContent = 'An error occurred. Please try again.';
                 errorMessage.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
-            });
+            }
         });
     </script>
 </body>
 </html>
-
