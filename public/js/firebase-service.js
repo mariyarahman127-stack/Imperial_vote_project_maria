@@ -30,23 +30,27 @@ const FirebaseService = {
         }
     },
 
-    // Save a vote to Realtime Database
+// Save a vote to Realtime Database
     saveVote: async function(voteData) {
         const self = this;
         
+        // Generate 8-digit receipt ID if not provided
+        const receiptId = voteData.id || Date.now().toString().slice(-8);
+        
         if (!self.init() || !window.firebaseDb) {
             // Fallback to localStorage
-            return self.saveVoteLocal(voteData);
+            console.log('Firebase not initialized, using localStorage');
+            return self.saveVoteLocal({...voteData, id: receiptId});
         }
-
+        
         try {
             const votesRef = window.firebaseDb.ref(self.VOTES_NODE);
-            // Use Receipt ID as the Firebase key instead of push()
-            const voteRef = votesRef.child(voteData.id);
+            // Use 8-digit Receipt ID as the Firebase key
+            const voteRef = votesRef.child(receiptId);
             
             await voteRef.set({
-                id: voteData.id,
-                userEmail: voteData.userEmail.toLowerCase(),
+                id: receiptId,
+                userEmail: (voteData.userEmail || '').toLowerCase(),
                 candidateId: voteData.candidateId,
                 candidateName: voteData.candidateName,
                 candidateDepartment: voteData.candidateDepartment,
@@ -56,12 +60,12 @@ const FirebaseService = {
                 timestampRaw: Date.now()
             });
             
-            console.log('Vote saved to Realtime Database with Receipt ID:', voteData.id);
-            return { success: true, id: voteData.id };
+            console.log('Vote saved to Firebase with Receipt ID:', receiptId);
+            return { success: true, id: receiptId };
         } catch (error) {
-            console.error('Error saving vote to Realtime Database:', error);
+            console.error('Error saving vote to Firebase:', error);
             // Fallback to localStorage
-            return self.saveVoteLocal(voteData);
+            return self.saveVoteLocal({...voteData, id: receiptId});
         }
     },
 
