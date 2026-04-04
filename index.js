@@ -669,13 +669,10 @@ app.delete('/api/admin/reset-user/:email', async (req, res) => {
     }
 });
 
-// Serve static files - Vercel handles this via vercel.json
-// For local development, use express.static
-if (process.env.VERCEL === undefined) {
-    app.use(express.static(path.join(__dirname, '.')));
-}
+// Serve static files - works on both local and Vercel
+app.use(express.static(path.join(__dirname, '.')));
 
-// Handle SPA routing - serve static files for Vercel
+// Handle SPA routing
 app.get('*', (req, res) => {
     console.log('Request path:', req.path);
     
@@ -688,14 +685,18 @@ app.get('*', (req, res) => {
     const fs = require('fs');
     let filePath = req.path === '/' ? '/index.html' : req.path;
     const fullPath = path.join(__dirname, filePath);
+    console.log('Looking for file:', fullPath);
     
     // Check if file exists
     if (fs.existsSync(fullPath)) {
+        console.log('Serving file:', fullPath);
         return res.sendFile(fullPath);
     }
     
     // Default to index.html
-    res.sendFile(path.join(__dirname, 'index.html'));
+    const indexPath = path.join(__dirname, 'index.html');
+    console.log('Serving index.html');
+    res.sendFile(indexPath);
 });
 
 // Start server (for local development)
