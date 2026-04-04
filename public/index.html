@@ -257,6 +257,20 @@
             }
         }
 
+        .typing-text {
+            color: var(--primary);
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+            color: var(--primary);
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
         @keyframes fadeInUp {
             0%, 100% {
                 opacity: 1;
@@ -613,7 +627,8 @@
             </div>
             
             <h1 class="hero-title">
-                <span>Imperial College</span> of Engineering
+                <span class="typing-text"></span>
+                <span class="cursor">|</span>
             </h1>
             
             <p class="hero-subtitle">
@@ -855,6 +870,30 @@
                 overlay.remove();
             }
         }
+    </script>
+<script>
+        // Typing animation for "Imperial College of Engineering"
+        const textElement = document.querySelector('.typing-text');
+        const text = "Imperial College of Engineering";
+        let index = 0;
+        
+        function typeText() {
+            if (index < text.length) {
+                textElement.textContent += text.charAt(index);
+                index++;
+                setTimeout(typeText, 150);
+            } else {
+                // Wait 3 seconds, then restart typing
+                setTimeout(() => {
+                    index = 0;
+                    textElement.textContent = '';
+                    setTimeout(typeText, 500);
+                }, 3000);
+            }
+        }
+        
+        // Start typing when page loads
+        typeText();
     </script>
 </body>
 </html>
