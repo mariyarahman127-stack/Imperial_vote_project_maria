@@ -148,6 +148,17 @@
                     // Store user info in localStorage
                     localStorage.setItem('currentUser', JSON.stringify(result.user));
                     
+                    // Load voting schedule and save to localStorage for mobile access
+                    try {
+                        const scheduleRes = await fetch(window.location.origin + '/api/voting-schedule');
+                        const scheduleData = await scheduleRes.json();
+                        if (scheduleData.success && scheduleData.schedule) {
+                            localStorage.setItem('votingSchedule', JSON.stringify(scheduleData.schedule));
+                        }
+                    } catch(e) {
+                        console.log('Could not load voting schedule:', e);
+                    }
+                    
                     // Redirect based on role
                     if (result.user.role === 'admin') {
                         window.location.href = '/admin-dashboard.html';

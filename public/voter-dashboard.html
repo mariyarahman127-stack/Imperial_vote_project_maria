@@ -648,29 +648,38 @@
             return userVote ? userVote.id : null;
         }
         
-        // Load voting schedule from Firebase
+        // Load voting schedule from Firebase and server API
         async function loadVotingSchedule() {
             try {
+                // First try Firebase client
                 if (typeof firebase !== 'undefined' && firebase.database) {
-                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
-                    const schedule = snapshot.val();
-                    console.log('Voting schedule loaded from Firebase:', schedule);
-                    
-                    // If Firebase returns null, clear localStorage to prevent stale data
-                    if (!schedule) {
-                        console.log('Firebase returned null, clearing localStorage to prevent stale data');
-                        localStorage.removeItem('votingSchedule');
-                        return null;
+                    try {
+                        const snapshot = await firebase.database().ref('votingSchedule').once('value');
+                        const schedule = snapshot.val();
+                        if (schedule) {
+                            localStorage.setItem('votingSchedule', JSON.stringify(schedule));
+                            return schedule;
+                        }
+                    } catch(e) {
+                        console.log('Firebase client error:', e);
                     }
-                    
-                    localStorage.setItem('votingSchedule', JSON.stringify(schedule));
-                    return schedule;
                 }
                 
-                // Fallback to localStorage ONLY if Firebase is not available
+                // Try server API as fallback
+                try {
+                    const response = await fetch(window.location.origin + '/api/voting-schedule');
+                    const data = await response.json();
+                    if (data.success && data.schedule) {
+                        localStorage.setItem('votingSchedule', JSON.stringify(data.schedule));
+                        return data.schedule;
+                    }
+                } catch(e) {
+                    console.log('Server API error:', e);
+                }
+                
+                // Check localStorage as last fallback
                 const localSchedule = localStorage.getItem('votingSchedule');
                 if (localSchedule) {
-                    console.log('Voting schedule loaded from localStorage (Firebase not available):', localSchedule);
                     return JSON.parse(localSchedule);
                 }
             } catch (error) {
