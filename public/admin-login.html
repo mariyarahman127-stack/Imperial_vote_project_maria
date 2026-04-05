@@ -279,6 +279,10 @@
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <script>
         function togglePassword() {
             var input = document.getElementById('admin-password');
@@ -291,10 +295,10 @@
                 btn.className = 'fas fa-eye';
             }
         }
-        document.getElementById('admin-login-form').addEventListener('submit', function(e) {
+        document.getElementById('admin-login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('admin-email').value.trim();
+            const email = document.getElementById('admin-email').value.trim().toLowerCase();
             const password = document.getElementById('admin-password').value;
             
             if (!email || !password) {
@@ -302,7 +306,7 @@
                 return;
             }
             
-            // Admin login
+            // Also allow hardcoded admin for backward compatibility
             if (email === 'admin@ice.edu' && password === 'admin2026') {
                 const user = {
                     id: 1,
@@ -315,7 +319,50 @@
                 return;
             }
             
-            alert('Invalid admin credentials');
+            // Try to login with Firebase Auth
+            try {
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Check if user is admin in database
+                const snapshot = await firebase.database().ref('Administration').orderByChild('email').equalTo(email).once('value');
+                let isAdmin = false;
+                
+                if (snapshot.exists()) {
+                    const adminData = snapshot.val();
+                    for (let key in adminData) {
+                        if (adminData[key].role === 'admin') {
+                            isAdmin = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Also check 'admins' node
+                if (!isAdmin) {
+                    const adminSnapshot = await firebase.database().ref('admins').orderByChild('email').equalTo(email).once('value');
+                    if (adminSnapshot.exists()) {
+                        isAdmin = true;
+                    }
+                }
+                
+                if (isAdmin) {
+                    const userData = {
+                        uid: user.uid,
+                        name: user.displayName || email.split('@')[0],
+                        email: email,
+                        role: 'admin'
+                    };
+                    localStorage.setItem('currentUser', JSON.stringify(userData));
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    await firebase.auth().signOut();
+                    alert('You are not an admin user');
+                }
+            } catch (error) {
+                console.error('Admin login error:', error);
+                alert('Invalid admin credentials');
+            }
         });
     </script>
 </body>
