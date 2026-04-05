@@ -269,20 +269,33 @@
         async function loadVotingSchedule() {
             try {
                 if (typeof firebase !== 'undefined' && firebase.database) {
-                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
-                    votingSchedule = snapshot.val();
-                    console.log('Voting schedule loaded from Firebase:', votingSchedule);
-                    
-                    if (!votingSchedule) {
-                        localStorage.removeItem('votingSchedule');
+                    try {
+                        const snapshot = await firebase.database().ref('votingSchedule').once('value');
+                        votingSchedule = snapshot.val();
+                        console.log('Voting schedule from Firebase client:', votingSchedule);
+                    } catch(e) {
+                        console.log('Firebase client failed, trying server API:', e);
                     }
                 }
                 
-                if (!votingSchedule && typeof firebase === 'undefined') {
+                if (!votingSchedule) {
+                    try {
+                        const response = await fetch(window.location.origin + '/api/voting-schedule');
+                        const data = await response.json();
+                        if (data.success && data.schedule) {
+                            votingSchedule = data.schedule;
+                            localStorage.setItem('votingSchedule', JSON.stringify(votingSchedule));
+                            console.log('Voting schedule from server API:', votingSchedule);
+                        }
+                    } catch(e) {
+                        console.log('Server API failed:', e);
+                    }
+                }
+                
+                if (!votingSchedule) {
                     const localSchedule = localStorage.getItem('votingSchedule');
                     if (localSchedule) {
                         votingSchedule = JSON.parse(localSchedule);
-                        console.log('Voting schedule loaded from localStorage:', votingSchedule);
                     }
                 }
             } catch (error) {

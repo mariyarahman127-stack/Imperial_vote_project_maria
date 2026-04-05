@@ -330,7 +330,7 @@ app.get('/api/voting-schedule', async (req, res) => {
         if (schedule && schedule.startTime && schedule.endTime) {
             res.json({ success: true, schedule: schedule });
         } else {
-            res.json({ success: false, message: 'Voting schedule not configured' });
+            res.json({ success: false, message: 'Voting schedule not configured. Please contact administrator.' });
         }
     } catch (error) {
         console.error('Error getting voting schedule:', error);
