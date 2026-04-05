@@ -326,15 +326,40 @@ app.post('/api/casting-vote', (req, res) => {
 // Get voting schedule (public endpoint)
 app.get('/api/voting-schedule', async (req, res) => {
     try {
-        const schedule = await firebaseRequest('GET', '/votingSchedule');
+        let schedule = await firebaseRequest('GET', '/votingSchedule');
         if (schedule && schedule.startTime && schedule.endTime) {
             res.json({ success: true, schedule: schedule });
         } else {
-            res.json({ success: false, message: 'Voting schedule not configured' });
+            // Create default voting schedule (7 days, allowing voting now)
+            const now = Date.now();
+            const sevenDaysLater = now + (7 * 24 * 60 * 60 * 1000);
+            const defaultSchedule = {
+                startTime: now,
+                endTime: sevenDaysLater,
+                startTimeFormatted: new Date(now).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }),
+                endTimeFormatted: new Date(sevenDaysLater).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }),
+                updatedAt: now,
+                updatedAtFormatted: new Date(now).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true })
+            };
+            
+            // Save default schedule to Firebase
+            await firebaseRequest('PUT', '/votingSchedule', defaultSchedule);
+            console.log('Created default voting schedule in Firebase');
+            
+            res.json({ success: true, schedule: defaultSchedule, default: true });
         }
     } catch (error) {
         console.error('Error getting voting schedule:', error);
-        res.status(500).json({ success: false, message: 'Failed to get voting schedule' });
+        // Return default schedule on error so voting can proceed
+        const now = Date.now();
+        const sevenDaysLater = now + (7 * 24 * 60 * 60 * 1000);
+        const fallbackSchedule = {
+            startTime: now,
+            endTime: sevenDaysLater,
+            startTimeFormatted: 'Active Now',
+            endTimeFormatted: '7 Days'
+        };
+        res.json({ success: true, schedule: fallbackSchedule, fallback: true });
     }
 });
 
