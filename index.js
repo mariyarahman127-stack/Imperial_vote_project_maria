@@ -323,6 +323,21 @@ app.post('/api/casting-vote', (req, res) => {
     res.json({ success: true, message: `Casting vote for ${candidate.name}`, winner: candidate });
 });
 
+// Get voting schedule (public endpoint)
+app.get('/api/voting-schedule', async (req, res) => {
+    try {
+        const schedule = await firebaseRequest('GET', '/votingSchedule');
+        if (schedule && schedule.startTime && schedule.endTime) {
+            res.json({ success: true, schedule: schedule });
+        } else {
+            res.json({ success: false, message: 'Voting schedule not configured' });
+        }
+    } catch (error) {
+        console.error('Error getting voting schedule:', error);
+        res.status(500).json({ success: false, message: 'Failed to get voting schedule' });
+    }
+});
+
 // Admin endpoint to reset all votes
 app.post('/api/admin/save-schedule', async (req, res) => {
     const { adminKey, startTime, endTime, startTimeFormatted, endTimeFormatted, updatedAt, updatedAtFormatted } = req.body;
