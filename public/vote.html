@@ -268,47 +268,22 @@
         // Load voting schedule from Firebase
         async function loadVotingSchedule() {
             try {
-                // First try Firebase client
                 if (typeof firebase !== 'undefined' && firebase.database) {
-                    try {
-                        const snapshot = await firebase.database().ref('votingSchedule').once('value');
-                        votingSchedule = snapshot.val();
-                        console.log('Voting schedule loaded from Firebase:', votingSchedule);
-                    } catch (fbError) {
-                        console.log('Firebase client error, trying server API:', fbError);
+                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
+                    votingSchedule = snapshot.val();
+                    console.log('Voting schedule loaded from Firebase:', votingSchedule);
+                    
+                    if (!votingSchedule) {
+                        localStorage.removeItem('votingSchedule');
                     }
                 }
                 
-                // Fallback to server API if Firebase failed or not available
-                if (!votingSchedule) {
-                    try {
-                        const apiBaseUrl = window.location.origin;
-                        const response = await fetch(apiBaseUrl + '/api/voting-schedule');
-                        const data = await response.json();
-                        if (data.success && data.schedule) {
-                            votingSchedule = data.schedule;
-                            console.log('Voting schedule loaded from server API:', votingSchedule);
-                            // Save to localStorage for offline access
-                            localStorage.setItem('votingSchedule', JSON.stringify(votingSchedule));
-                        }
-                    } catch (apiError) {
-                        console.log('Server API error:', apiError);
-                    }
-                }
-                
-                // Last fallback to localStorage
-                if (!votingSchedule) {
+                if (!votingSchedule && typeof firebase === 'undefined') {
                     const localSchedule = localStorage.getItem('votingSchedule');
                     if (localSchedule) {
                         votingSchedule = JSON.parse(localSchedule);
                         console.log('Voting schedule loaded from localStorage:', votingSchedule);
                     }
-                }
-                
-                // If still no schedule, clear localStorage to prevent stale data
-                if (!votingSchedule) {
-                    console.log('No voting schedule found, clearing localStorage');
-                    localStorage.removeItem('votingSchedule');
                 }
             } catch (error) {
                 console.error('Error loading voting schedule:', error);
