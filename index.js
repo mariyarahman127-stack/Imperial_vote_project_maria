@@ -382,9 +382,10 @@ app.post('/api/admin/reset-votes', async (req, res) => {
     try {
         // Delete all votes from Firebase
         await firebaseRequest('DELETE', '/votes');
-        // Note: We do NOT delete voters collection to preserve admin user data
+        // Delete all voters from Firebase so they can vote again
+        await firebaseRequest('DELETE', '/voters');
         
-        res.json({ success: true, message: 'All votes have been reset' });
+        res.json({ success: true, message: 'All votes and voters have been reset' });
     } catch (error) {
         console.error('Error resetting votes:', error);
         res.status(500).json({ success: false, message: 'Failed to reset votes' });

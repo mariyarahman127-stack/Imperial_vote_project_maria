@@ -732,9 +732,18 @@
                 try {
                     console.log('Starting to clear all votes...');
                     
-                    // Clear localStorage votes
+                    // Clear localStorage votes and voters
                     localStorage.removeItem('votes');
-                    console.log('Cleared localStorage votes');
+                    localStorage.removeItem('voteReceipt');
+                    console.log('Cleared localStorage votes and receipts');
+                    
+                    // Also clear any currentUser hasVoted status
+                    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                    if (currentUser) {
+                        currentUser.hasVoted = false;
+                        currentUser.votedFor = null;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    }
                     
                     const response = await fetch('/api/admin/reset-votes', {
                         method: 'POST',

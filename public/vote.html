@@ -522,10 +522,42 @@
             if (!selectedCandidate) return;
             
             const btn = document.getElementById('confirm-btn');
+            
+            // Prevent multiple clicks
+            if (btn.disabled) {
+                console.log('Vote already being submitted, ignoring duplicate click');
+                return;
+            }
+            
             btn.textContent = 'Submitting...';
             btn.disabled = true;
             
             try {
+                // Check if already voted in localStorage first (quick check)
+                const localVotes = JSON.parse(localStorage.getItem('votes') || '[]');
+                const alreadyVotedLocal = localVotes.some(v => v.userEmail && v.userEmail.toLowerCase() === currentUser.email.toLowerCase());
+                if (alreadyVotedLocal) {
+                    alert('You have already voted!');
+                    window.location.href = 'voter-dashboard.html';
+                    return;
+                }
+                
+                // Check via server API for duplicate vote
+                try {
+                    const checkResponse = await fetch(window.location.origin + '/api/check-vote/' + encodeURIComponent(currentUser.email));
+                    const checkData = await checkResponse.json();
+                    if (checkData.hasVoted) {
+                        alert('You have already voted!');
+                        currentUser.hasVoted = true;
+                        currentUser.votedFor = checkData.votedFor;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                        window.location.href = 'voter-dashboard.html';
+                        return;
+                    }
+                } catch(e) {
+                    console.log('Could not check vote status via API:', e);
+                }
+                
                 // Save vote ID first
                 const voteId = Date.now().toString().slice(-8);
                 
