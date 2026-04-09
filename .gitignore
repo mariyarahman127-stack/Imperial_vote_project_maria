@@ -7,3 +7,6 @@ vote/
 index.js
 *.md
 server.log
+
+.vercel
+.env*.local

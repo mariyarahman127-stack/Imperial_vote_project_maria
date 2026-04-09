@@ -721,23 +721,30 @@
                 const apiBaseUrl = window.location.origin;
                 const response = await fetch(apiBaseUrl + '/api/publish-status');
                 const data = await response.json();
+                console.log('Publish status:', data);
                 
                 const resultsLink = document.getElementById('results-nav-link');
                 const resultsBtn = document.getElementById('results-hero-btn');
                 
                 if (data.published) {
-                    // Results are published - show the links
+                    // Results are published - enable the links
+                    console.log('Results are published - enabling buttons');
                     if (resultsLink) {
                         resultsLink.style.display = '';
+                        resultsLink.style.pointerEvents = 'auto';
+                        resultsLink.style.opacity = '1';
                         resultsLink.href = 'results.html';
                         resultsLink.onclick = null;
+                        resultsLink.textContent = 'Results';
                     }
                     if (resultsBtn) {
-                        resultsBtn.style.display = '';
+                        resultsBtn.style.display = 'inline-flex';
+                        resultsBtn.style.pointerEvents = 'auto';
                         resultsBtn.onclick = null;
                     }
                 } else {
-                    // Results not published - hide or show message
+                    // Results not published - show message
+                    console.log('Results not published');
                     if (resultsLink) {
                         resultsLink.style.display = '';
                         resultsLink.onclick = function(e) {
