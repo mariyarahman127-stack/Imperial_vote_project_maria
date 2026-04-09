@@ -140,6 +140,67 @@
             z-index: 10;
         }
         .password-toggle:hover { color: #2563eb; }
+        .camera-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+        }
+        .camera-container.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-container video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+        .camera-container canvas {
+            display: none;
+        }
+        .camera-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        .btn-capture {
+            padding: 12px 30px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-cancel-camera {
+            padding: 12px 30px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .btn-take-photo {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body data-page="register">
@@ -162,9 +223,10 @@
                     <img id="photo-preview" style="display: none;" src="" alt="Preview">
                     <span class="placeholder" id="photo-placeholder">📷</span>
                 </div>
-                <input type="file" id="photo-input" accept="image/*" required onchange="previewPhoto()">
-                <p class="photo-hint">Click to upload your photo (JPEG, PNG)</p>
-                <p class="photo-error" id="photo-error">Please upload your photo</p>
+                <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="previewPhoto()" style="display: none;">
+                <button type="button" class="btn-take-photo" onclick="openCamera()">📷 Take Photo with Camera</button>
+                <p class="photo-hint">Or click the box above to upload a photo</p>
+                <p class="photo-error" id="photo-error">Please take your photo</p>
             </div>
 
             <div class="form-group">
@@ -227,8 +289,19 @@
         </p>
     </div>
 
+    <!-- Camera Modal -->
+    <div class="camera-container" id="camera-container">
+        <video id="camera-video" autoplay playsinline></video>
+        <canvas id="camera-canvas"></canvas>
+        <div class="camera-controls">
+            <button class="btn-capture" onclick="capturePhoto()">📸 Take Photo</button>
+            <button class="btn-cancel-camera" onclick="closeCamera()">✕ Cancel</button>
+        </div>
+    </div>
+
     <script>
         let photoData = null;
+        let cameraStream = null;
         
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
@@ -239,6 +312,57 @@
             } else {
                 input.type = 'password';
                 btn.className = 'fas fa-eye';
+            }
+        }
+        
+        function openCamera() {
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-video');
+            
+            container.classList.add('active');
+            
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(function(stream) {
+                    cameraStream = stream;
+                    video.srcObject = stream;
+                })
+                .catch(function(error) {
+                    console.error('Camera error:', error);
+                    alert('Could not access camera. Please use the file upload option.');
+                    closeCamera();
+                });
+        }
+        
+        function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            const preview = document.getElementById('photo-preview');
+            const placeholder = document.getElementById('photo-placeholder');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            photoData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            preview.src = photoData;
+            preview.style.display = 'block';
+            placeholder.style.display = 'none';
+            
+            closeCamera();
+            
+            document.getElementById('photo-error').style.display = 'none';
+        }
+        
+        function closeCamera() {
+            const container = document.getElementById('camera-container');
+            container.classList.remove('active');
+            
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
             }
         }
         
@@ -294,7 +418,7 @@
             
             // Validate photo is uploaded
             if (!photoData) {
-                photoError.textContent = 'Please upload your photo';
+                photoError.textContent = 'Please take your photo with camera';
                 photoError.style.display = 'block';
                 return;
             }
