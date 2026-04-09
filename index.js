@@ -197,6 +197,12 @@ app.post('/api/vote', async (req, res) => {
             }
         }
         
+        // Check if max voters (1000) reached
+        const currentVotesCount = allVotes ? allVotes.length : 0;
+        if (currentVotesCount >= 1000) {
+            return res.status(400).json({ success: false, message: 'Maximum voting limit (1000) reached. No more votes can be cast.' });
+        }
+        
         const candidate = candidates.find(c => c.id === candidateId);
         if (!candidate) {
             return res.status(400).json({ success: false, message: 'Candidate not found' });
@@ -389,6 +395,22 @@ app.post('/api/admin/reset-votes', async (req, res) => {
     } catch (error) {
         console.error('Error resetting votes:', error);
         res.status(500).json({ success: false, message: 'Failed to reset votes' });
+    }
+});
+
+// Get total votes count - public endpoint
+app.get('/api/votes-count', async (req, res) => {
+    try {
+        const votes = await firebaseRequest('GET', '/votes');
+        if (votes && typeof votes === 'object') {
+            const count = Object.keys(votes).length;
+            res.json({ success: true, count: count });
+        } else {
+            res.json({ success: true, count: 0 });
+        }
+    } catch (error) {
+        console.error('Error getting votes count:', error);
+        res.json({ success: true, count: 0 });
     }
 });
 
