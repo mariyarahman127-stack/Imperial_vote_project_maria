@@ -555,11 +555,12 @@
                         return;
                     }
                     
-                    // Also check if max votes (1000) reached
+                    // Also check if max votes reached
                     const votesCountResponse = await fetch(window.location.origin + '/api/votes-count');
                     const votesCountData = await votesCountResponse.json();
-                    if (votesCountData.count >= 1000) {
-                        alert('Maximum voting limit (1000) has been reached. No more votes can be cast.');
+                    const maxVoters = window.UNIVOTE_CONFIG?.TOTAL_VOTERS || 2000;
+                    if (votesCountData.count >= maxVoters) {
+                        alert('Maximum voting limit (' + maxVoters + ') has been reached. No more votes can be cast.');
                         return;
                     }
                 } catch(e) {
