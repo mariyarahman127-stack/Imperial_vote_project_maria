@@ -454,10 +454,67 @@
                 width: 100%;
                 justify-content: center;
             }
+            .mobile-header {
+                display: flex !important;
+            }
+        }
+        
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 999;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+        }
+        
+        .hamburger-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        .mobile-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .mobile-logo i {
+            font-size: 1.5rem;
+        }
+        
+        .main-content {
+            padding-top: 60px;
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <button class="hamburger-btn" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="index.html" class="mobile-logo">
+            <i class="fas fa-vote-yea"></i>
+            <span>UniVote</span>
+        </a>
+        <div style="width: 40px;"></div>
+    </div>
+
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -872,7 +929,25 @@
                     showResultsNotAvailable();
                 });
             });
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(e) {
+                const sidebar = document.querySelector('.sidebar');
+                const hamburger = document.querySelector('.hamburger-btn');
+                if (sidebar && hamburger && window.innerWidth <= 992) {
+                    if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                        sidebar.classList.remove('active');
+                    }
+                }
+            });
         });
+        
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+            }
+        }
 
         function showResultsNotAvailable() {
             // Create modal overlay
