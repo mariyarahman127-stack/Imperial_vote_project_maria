@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Imperial College of Engineering</title>
+    <!-- UniVote Configuration - Change TOTAL_VOTERS in config.html -->
+    <script src="config.html"></script>
     <!-- Google Fonts - Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -588,7 +590,7 @@
                     <div class="stat-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="stat-value">1000</div>
+                    <div class="stat-value" id="total-voters-display">1000</div>
                     <div class="stat-label">Total Voters</div>
                 </div>
             </div>
@@ -906,6 +908,13 @@
         }
         
         document.addEventListener('DOMContentLoaded', function() {
+            // Update total voters from config
+            const totalVoters = window.UNIVOTE_CONFIG?.TOTAL_VOTERS || 1000;
+            const totalVotersEl = document.getElementById('total-voters-display');
+            if (totalVotersEl) {
+                totalVotersEl.textContent = totalVoters;
+            }
+            
             renderDashboard();
             
             const logoutBtn = document.getElementById('logout-btn');

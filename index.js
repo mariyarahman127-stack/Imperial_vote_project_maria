@@ -1,3 +1,11 @@
+// =====================================================
+// UniVote Configuration - Easy to Edit
+// =====================================================
+// Just change TOTAL_VOTERS below to update all pages!
+// 1. Edit this file (index.js) - for vote limit check
+// 2. Edit config.html - for display on all pages
+const TOTAL_VOTERS = 1000;
+
 const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
@@ -197,10 +205,10 @@ app.post('/api/vote', async (req, res) => {
             }
         }
         
-        // Check if max voters (1000) reached
+        // Check if max voters reached (using TOTAL_VOTERS)
         const currentVotesCount = allVotes ? allVotes.length : 0;
-        if (currentVotesCount >= 1000) {
-            return res.status(400).json({ success: false, message: 'Maximum voting limit (1000) reached. No more votes can be cast.' });
+        if (currentVotesCount >= TOTAL_VOTERS) {
+            return res.status(400).json({ success: false, message: 'Maximum voting limit (' + TOTAL_VOTERS + ') reached. No more votes can be cast.' });
         }
         
         const candidate = candidates.find(c => c.id === candidateId);
