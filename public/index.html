@@ -578,7 +578,7 @@
             </a>
             <div class="nav-links">
                 <a href="#about">About</a>
-                <a href="results.html">Results</a>
+                <a href="results.html" id="results-nav-link">Results</a>
                 <a href="login.html" class="btn-primary">
                     <i class="fas fa-sign-in-alt"></i>
                     Login to Vote
@@ -613,9 +613,9 @@
                     <i class="fas fa-sign-in-alt"></i>
                     Login to Vote
                 </a>
-                <a href="results.html" class="btn-outline">
+                <a href="results.html" id="results-hero-btn" class="btn-outline">
                     <i class="fas fa-chart-bar"></i>
-                    View Results
+                    Vote Results
                 </a>
                 <a href="admin-login.html" class="btn-outline" style="border-color: #f59e0b; color: #f59e0b;">
                     <i class="fas fa-user-shield"></i>
@@ -715,6 +715,48 @@
             }
         }
 
+        // Check publish status and update UI
+        async function checkPublishStatus() {
+            try {
+                const apiBaseUrl = window.location.origin;
+                const response = await fetch(apiBaseUrl + '/api/publish-status');
+                const data = await response.json();
+                
+                const resultsLink = document.getElementById('results-nav-link');
+                const resultsBtn = document.getElementById('results-hero-btn');
+                
+                if (data.published) {
+                    // Results are published - show the links
+                    if (resultsLink) {
+                        resultsLink.style.display = '';
+                        resultsLink.href = 'results.html';
+                        resultsLink.onclick = null;
+                    }
+                    if (resultsBtn) {
+                        resultsBtn.style.display = '';
+                        resultsBtn.onclick = null;
+                    }
+                } else {
+                    // Results not published - hide or show message
+                    if (resultsLink) {
+                        resultsLink.style.display = '';
+                        resultsLink.onclick = function(e) {
+                            e.preventDefault();
+                            showResultsNotAvailable();
+                        };
+                    }
+                    if (resultsBtn) {
+                        resultsBtn.onclick = function(e) {
+                            e.preventDefault();
+                            showResultsNotAvailable();
+                        };
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking publish status:', error);
+            }
+        }
+
         // Counter Animation
         function animateCounter(element, target) {
             let count = 0;
@@ -732,6 +774,7 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             fetchVotesCount();
+            checkPublishStatus();
             
             // Update total voters from config
             const totalVoters = window.UNIVOTE_CONFIG?.TOTAL_VOTERS || 1000;
@@ -766,89 +809,6 @@
             
             statNumbers.forEach(stat => observer.observe(stat));
         });
-
-        // Intercept Results links to show message
-        document.addEventListener('DOMContentLoaded', function() {
-            // Find all links that point to results.html
-            const resultsLinks = document.querySelectorAll('a[href="results.html"]');
-            
-            resultsLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showResultsNotAvailable();
-                });
-            });
-        });
-
-        function showResultsNotAvailable() {
-            // Create modal overlay
-            const overlay = document.createElement('div');
-            overlay.id = 'results-modal-overlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                backdrop-filter: blur(4px);
-            `;
-
-            // Create modal content
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                background: white;
-                border-radius: 16px;
-                max-width: 420px;
-                width: 90%;
-                padding: 2rem;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-                text-align: center;
-            `;
-
-            modal.innerHTML = `
-                <div style="font-size: 64px; margin-bottom: 20px;">🔒</div>
-                <h2 style="color: #1e293b; margin-bottom: 15px; font-size: 1.5rem;">Results Not Available</h2>
-                <p style="color: #64748b; font-size: 1rem; margin-bottom: 15px;">Only administrators can view election results.</p>
-                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px;">Results will be published after the election ends</p>
-                <button onclick="closeResultsModal()" style="
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    padding: 0.75rem 1.5rem;
-                    background: #2563eb;
-                    color: white;
-                    font-family: 'Poppins', sans-serif;
-                    font-size: 0.95rem;
-                    font-weight: 600;
-                    border-radius: 12px;
-                    border: none;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                ">OK</button>
-            `;
-
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-
-            // Close on overlay click
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) {
-                    closeResultsModal();
-                }
-            });
-        }
-
-        function closeResultsModal() {
-            const overlay = document.getElementById('results-modal-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
     </script>
 </body>
 </html>

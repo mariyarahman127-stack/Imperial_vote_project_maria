@@ -406,6 +406,43 @@ app.post('/api/admin/reset-votes', async (req, res) => {
     }
 });
 
+// Admin endpoint to toggle results publication
+app.post('/api/admin/toggle-publish', async (req, res) => {
+    const { action, adminKey } = req.body;
+    if (adminKey && adminKey !== 'admin2026') {
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+    
+    try {
+        const isPublish = action === 'publish';
+        await firebaseRequest('PUT', '/publishStatus', { published: isPublish });
+        res.json({ success: true, published: isPublish });
+    } catch (error) {
+        console.error('Error toggling publish:', error);
+        res.status(500).json({ success: false, message: 'Failed to update publish status' });
+    }
+});
+
+// Get publish status (public endpoint)
+app.get('/api/publish-status', async (req, res) => {
+    try {
+        const status = await firebaseRequest('GET', '/publishStatus');
+        res.json({ published: status && status.published ? true : false });
+    } catch (error) {
+        res.json({ published: false });
+    }
+});
+
+// Admin endpoint to get publish status
+app.get('/api/admin/publish-status', async (req, res) => {
+    try {
+        const status = await firebaseRequest('GET', '/publishStatus');
+        res.json({ published: status && status.published ? true : false });
+    } catch (error) {
+        res.json({ published: false });
+    }
+});
+
 // Get total votes count - public endpoint
 app.get('/api/votes-count', async (req, res) => {
     try {
