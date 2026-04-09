@@ -156,6 +156,17 @@
         <div id="error-message" class="error-message"></div>
 
         <form id="register-form">
+            <div class="photo-upload">
+                <label class="photo-upload-label">Student Photo <span style="color: red;">*</span></label>
+                <div class="photo-preview-container" onclick="document.getElementById('photo-input').click()">
+                    <img id="photo-preview" style="display: none;" src="" alt="Preview">
+                    <span class="placeholder" id="photo-placeholder">📷</span>
+                </div>
+                <input type="file" id="photo-input" accept="image/*" required onchange="previewPhoto()">
+                <p class="photo-hint">Click to upload your photo (JPEG, PNG)</p>
+                <p class="photo-error" id="photo-error">Please upload your photo</p>
+            </div>
+
             <div class="form-group">
                 <label for="name">Full Name</label>
                 <input type="text" id="name" placeholder="Enter your full name" required>
@@ -217,6 +228,8 @@
     </div>
 
     <script>
+        let photoData = null;
+        
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
             var btn = input.parentElement.querySelector('.password-toggle i');
@@ -228,6 +241,43 @@
                 btn.className = 'fas fa-eye';
             }
         }
+        
+        function previewPhoto() {
+            const input = document.getElementById('photo-input');
+            const preview = document.getElementById('photo-preview');
+            const placeholder = document.getElementById('photo-placeholder');
+            const error = document.getElementById('photo-error');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                
+                // Validate file type
+                if (!file.type.match('image.*')) {
+                    error.textContent = 'Please select a valid image file';
+                    error.style.display = 'block';
+                    return;
+                }
+                
+                // Validate file size (max 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    error.textContent = 'Image size must be less than 2MB';
+                    error.style.display = 'block';
+                    return;
+                }
+                
+                error.style.display = 'none';
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    photoData = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
         document.getElementById('register-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -240,6 +290,15 @@
             const submitBtn = document.getElementById('submit-btn');
             const errorMessage = document.getElementById('error-message');
             const successMessage = document.getElementById('success-message');
+            const photoError = document.getElementById('photo-error');
+            
+            // Validate photo is uploaded
+            if (!photoData) {
+                photoError.textContent = 'Please upload your photo';
+                photoError.style.display = 'block';
+                return;
+            }
+            photoError.style.display = 'none';
             
             // Validate student ID
             if (!studentId || studentId.length < 4) {
@@ -310,7 +369,8 @@
                     name: name,
                     studentId: studentId,
                     department: department,
-                    password: password
+                    password: password,
+                    photo: photoData
                 })
             })
             .then(function(response) {

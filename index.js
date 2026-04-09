@@ -481,7 +481,9 @@ app.post('/api/login', async (req, res) => {
                         studentId: foundStudentId,
                         role: 'voter',
                         hasVoted: hasVoted || false,
-                        votedFor: votedFor
+                        votedFor: votedFor,
+                        photo: user.photo || null,
+                        registeredAt: user.registeredAt || null
                     }
                 });
             } else {
@@ -524,7 +526,7 @@ app.post('/api/login', async (req, res) => {
 
 // API endpoint for user registration
 app.post('/api/register', async (req, res) => {
-    const { email, name, studentId, department, password, uid } = req.body;
+    const { email, name, studentId, department, password, uid, photo } = req.body;
     if (!email || !password || !studentId) {
         return res.status(400).json({ success: false, message: 'Email, student ID and password required' });
     }
@@ -555,8 +557,8 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ success: false, message: 'This student has already voted. Cannot register again.' });
         }
         
-        // Save to Firebase registeredUsers node using studentId as key
-        const result = await firebaseRequest('PUT', '/registeredUsers/' + studentIdClean, {
+        // Prepare user data
+        const userData = {
             email: emailLower,
             name: name,
             studentId: studentIdClean,
@@ -564,7 +566,15 @@ app.post('/api/register', async (req, res) => {
             password: password,
             uid: uid || null,
             registeredAt: new Date().toISOString()
-        });
+        };
+        
+        // Add photo if provided
+        if (photo) {
+            userData.photo = photo;
+        }
+        
+        // Save to Firebase registeredUsers node using studentId as key
+        const result = await firebaseRequest('PUT', '/registeredUsers/' + studentIdClean, userData);
         
         if (!result) {
             console.error('Failed to save user to Firebase');

@@ -128,6 +128,38 @@
             color: white;
             font-weight: 600;
             font-size: 0.875rem;
+            overflow: hidden;
+        }
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-photo-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            border: 4px solid var(--primary);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-alt);
+        }
+        .profile-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-photo .placeholder {
+            font-size: 3rem;
+            color: var(--text-muted);
         }
 
         .user-details h4 {
@@ -394,6 +426,12 @@
                 <p class="page-subtitle">View your registration details and voting status</p>
             </div>
 
+            <div class="profile-photo-section">
+                <div class="profile-photo" id="profile-photo">
+                    <span class="placeholder">👤</span>
+                </div>
+            </div>
+
             <div class="profile-grid">
                 <!-- Registration Information -->
                 <div class="profile-card">
@@ -487,6 +525,17 @@
             // Registration date (use stored if available, otherwise show current date)
             const regDate = currentUser.registeredAt ? new Date(currentUser.registeredAt).toLocaleDateString() : new Date().toLocaleDateString();
             document.getElementById('profile-date').textContent = regDate;
+            
+            // Load and display user photo
+            if (currentUser.photo) {
+                // Update profile photo
+                const profilePhoto = document.getElementById('profile-photo');
+                profilePhoto.innerHTML = '<img src="' + currentUser.photo + '" alt="Profile Photo">';
+                
+                // Update sidebar avatar
+                const sidebarAvatar = document.getElementById('user-avatar');
+                sidebarAvatar.innerHTML = '<img src="' + currentUser.photo + '" alt="Profile">';
+            }
             
             // Check voting status
             const hasVoted = currentUser.hasVoted;
