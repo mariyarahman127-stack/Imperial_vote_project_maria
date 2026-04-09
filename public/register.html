@@ -336,15 +336,33 @@
             
             container.classList.add('active');
             
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            // Try front camera first (selfie camera), fallback to any available camera
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                } 
+            })
                 .then(function(stream) {
                     cameraStream = stream;
                     video.srcObject = stream;
                 })
                 .catch(function(error) {
-                    console.error('Camera error:', error);
-                    alert('Could not access camera. Please use the file upload option.');
-                    closeCamera();
+                    console.error('Front camera error:', error);
+                    // Try back camera as fallback
+                    navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment' } 
+                    })
+                    .then(function(stream) {
+                        cameraStream = stream;
+                        video.srcObject = stream;
+                    })
+                    .catch(function(err) {
+                        console.error('Camera error:', err);
+                        alert('Could not access camera. Please use the file upload option.');
+                        closeCamera();
+                    });
                 });
         }
         

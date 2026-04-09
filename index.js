@@ -571,7 +571,10 @@ app.post('/api/register', async (req, res) => {
         // Add photo if provided
         if (photo) {
             userData.photo = photo;
+            console.log('Photo data received, length:', photo.length);
         }
+        
+        console.log('Saving user to Firebase:', userData);
         
         // Save to Firebase registeredUsers node using studentId as key
         const result = await firebaseRequest('PUT', '/registeredUsers/' + studentIdClean, userData);
