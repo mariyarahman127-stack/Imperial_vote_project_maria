@@ -396,16 +396,31 @@
     </div>
 
     <script>
-        const totalVoters = 600;
+        const totalVoters = 2000;
         let currentUser = null;
         let resultsData = null;
+        let isPublished = false;
 
         function checkAuth() {
             const stored = localStorage.getItem('currentUser');
-            if (!stored) { window.location.href = 'login.html'; return; }
+            if (!stored) { 
+                // Allow access if results are published
+                return; 
+            }
             currentUser = JSON.parse(stored);
-            const isAdmin = currentUser.role === 'admin' || currentUser.role === 'chairperson';
-            document.getElementById('admin-stats').style.display = isAdmin ? 'grid' : 'none';
+        }
+
+        // Check if results are published
+        async function checkPublishStatus() {
+            try {
+                const response = await fetch('/api/publish-status');
+                const data = await response.json();
+                isPublished = data.published || false;
+                console.log('Publish status:', isPublished);
+            } catch (error) {
+                console.error('Error checking publish status:', error);
+                isPublished = false;
+            }
         }
 
         async function loadResults() {
@@ -416,21 +431,20 @@
         }
 
         async function renderResults() {
+            await checkPublishStatus();
             await loadResults();
             const totalVotes = resultsData.totalVotes;
             const sorted = resultsData.candidates.sort((a, b) => b.votes - a.votes);
             const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'chairperson');
 
-            if (isAdmin) {
-                document.getElementById('total-votes').textContent = totalVotes;
-                document.getElementById('turnout').textContent = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 100) + '%' : '0%';
-                document.getElementById('remaining').textContent = totalVoters - totalVotes;
-            }
+            // Show admin stats only for admins, but allow viewing if results are published
+            const canViewResults = isAdmin || isPublished;
+            document.getElementById('admin-stats').style.display = isAdmin ? 'grid' : 'none';
 
             let html = '';
             
-            if (!isAdmin) {
-                html = '<div class="results-locked"><div class="results-locked-icon"><i class="fas fa-lock"></i></div><h2>Results Not Available</h2><p>Only administrators can view election results.</p><p class="hint">Results will be published after the election ends.</p></div>';
+            if (!canViewResults) {
+                html = '<div class="results-locked"><div class="results-locked-icon"><i class="fas fa-lock"></i></div><h2>Results Not Available</h2><p>Results will be published after the election ends.</p></div>';
             } else {
                 if (sorted.length === 0) {
                     html = '<div class="no-votes"><i class="fas fa-vote-yea"></i><p>No votes yet. Be the first to vote!</p></div>';
@@ -448,7 +462,9 @@
 
         function logout() { localStorage.removeItem('currentUser'); window.location.href = '/login.html'; }
         document.getElementById('logout-btn').addEventListener('click', logout);
-        checkAuth();
+        
+        // Don't redirect if not logged in - allow viewing if results are published
+        // checkAuth() is removed to allow public access when published
         renderResults();
         setInterval(renderResults, 5000);
     </script>
