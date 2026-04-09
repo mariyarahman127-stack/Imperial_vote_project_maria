@@ -201,6 +201,21 @@
             font-weight: 500;
             margin-top: 10px;
         }
+        .photo-section-bottom {
+            border: 2px dashed #667eea;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: #f8f9ff;
+        }
+        .photo-section-bottom .photo-preview-container {
+            width: 100px;
+            height: 100px;
+        }
+        .photo-section-bottom .photo-preview-container .placeholder {
+            font-size: 30px;
+        }
     </style>
 </head>
 <body data-page="register">
@@ -217,18 +232,6 @@
         <div id="error-message" class="error-message"></div>
 
         <form id="register-form">
-            <div class="photo-upload">
-                <label class="photo-upload-label">Student Photo <span style="color: red;">*</span></label>
-                <div class="photo-preview-container" onclick="document.getElementById('photo-input').click()">
-                    <img id="photo-preview" style="display: none;" src="" alt="Preview">
-                    <span class="placeholder" id="photo-placeholder">📷</span>
-                </div>
-                <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="previewPhoto()" style="display: none;">
-                <button type="button" class="btn-take-photo" onclick="openCamera()">📷 Take Photo with Camera</button>
-                <p class="photo-hint">Or click the box above to upload a photo</p>
-                <p class="photo-error" id="photo-error">Please take your photo</p>
-            </div>
-
             <div class="form-group">
                 <label for="name">Full Name</label>
                 <input type="text" id="name" placeholder="Enter your full name" required>
@@ -277,6 +280,18 @@
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
+            </div>
+
+            <div class="photo-section-bottom">
+                <label style="font-weight: 500; color: #333; display: block; margin-bottom: 10px;">Student Photo <span style="color: red;">*</span></label>
+                <div class="photo-preview-container" onclick="document.getElementById('photo-input').click()">
+                    <img id="photo-preview" style="display: none;" src="" alt="Preview">
+                    <span class="placeholder" id="photo-placeholder">📷</span>
+                </div>
+                <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="previewPhoto()" style="display: none;">
+                <button type="button" class="btn-take-photo" onclick="openCamera()">📷 Take Photo with Camera</button>
+                <p style="font-size: 12px; color: #666; margin-top: 8px;">Click to take your photo</p>
+                <p class="photo-error" id="photo-error">Please take your photo</p>
             </div>
 
             <button type="submit" class="btn" id="submit-btn">
