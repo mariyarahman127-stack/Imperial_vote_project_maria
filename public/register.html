@@ -288,7 +288,7 @@
                     <img id="photo-preview" style="display: none;" src="" alt="Preview">
                     <span class="placeholder" id="photo-placeholder">📷</span>
                 </div>
-                <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="previewPhoto()" style="display: none;">
+                <input type="file" id="photo-input" accept="image/jpeg,image/jpg,image/png,image/*" capture="user" onchange="previewPhoto()" style="display: none;">
                 <button type="button" class="btn-take-photo" onclick="openCamera()">📷 Take Photo with Camera</button>
                 <p style="font-size: 12px; color: #666; margin-top: 8px;">Click to take your photo</p>
                 <p class="photo-error" id="photo-error">Please take your photo</p>
@@ -340,8 +340,8 @@
             navigator.mediaDevices.getUserMedia({ 
                 video: { 
                     facingMode: 'user',
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 } 
             })
                 .then(function(stream) {
@@ -352,15 +352,19 @@
                     console.error('Front camera error:', error);
                     // Try back camera as fallback
                     navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment' } 
+                        video: { 
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        } 
                     })
                     .then(function(stream) {
                         cameraStream = stream;
                         video.srcObject = stream;
                     })
                     .catch(function(err) {
-                        console.error('Camera error:', err);
-                        alert('Could not access camera. Please use the file upload option.');
+                        console.error('All cameras failed:', err);
+                        alert('Could not access camera. Please use file upload option or check camera permissions.');
                         closeCamera();
                     });
                 });
@@ -378,7 +382,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             
-            photoData = canvas.toDataURL('image/jpeg', 0.8);
+            photoData = canvas.toDataURL('image/jpeg', 0.75);
             
             preview.src = photoData;
             preview.style.display = 'block';
