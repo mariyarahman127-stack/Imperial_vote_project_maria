@@ -4,7 +4,7 @@
 // Just change TOTAL_VOTERS below to update all pages!
 // 1. Edit this file (index.js) - for vote limit check
 // 2. Edit config.html - for display on all pages
-const TOTAL_VOTERS = 1000;
+const TOTAL_VOTERS = 2000;
 
 const express = require('express');
 const cors = require('cors');

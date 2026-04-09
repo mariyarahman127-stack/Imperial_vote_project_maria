@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imperial College of Engineering - Voting System</title>
-    <!-- UniVote Configuration - Change TOTAL_VOTERS in config.html -->
-    <script src="config.html"></script>
+    <!-- UniVote Configuration - CHANGE TOTAL_VOTERS HERE: -->
+    <script>window.UNIVOTE_CONFIG = { TOTAL_VOTERS: 2000 };</script>
     <!-- Google Fonts - Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -734,6 +734,7 @@
             const totalVotersEl = document.querySelector('.stat-number[data-count]');
             if (totalVotersEl && !totalVotersEl.id) {
                 totalVotersEl.dataset.count = totalVoters;
+                totalVotersEl.textContent = totalVoters;
             }
             
             // Skip votes-cast since it's handled separately

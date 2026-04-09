@@ -3,5 +3,5 @@
 // =====================================================
 // TO CHANGE TOTAL VOTERS: Just edit this file!
 window.UNIVOTE_CONFIG = {
-    TOTAL_VOTERS: 1000
+    TOTAL_VOTERS: 2000
 };
