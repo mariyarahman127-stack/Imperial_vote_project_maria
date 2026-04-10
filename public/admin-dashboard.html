@@ -501,6 +501,33 @@
 
             <div class="main-card">
                 <div class="card-header">
+                    <h3><i class="fas fa-users"></i> Registered Users</h3>
+                    <button class="btn-primary" onclick="loadRegisteredUsers()" style="padding: 0.5rem 1rem;">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Photo</th>
+                                    <th>Name</th>
+                                    <th>Student ID</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                    <th>Registered At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registered-users-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-card">
+                <div class="card-header">
                     <h3><i class="fas fa-list"></i> Voting Records</h3>
                     <button class="btn-danger" onclick="clearAllVotes()" style="background: #ef4444; color: white; padding: 0.5rem 1rem; border: none; border-radius: 8px; cursor: pointer;">
                         <i class="fas fa-trash"></i> Delete All Votes
@@ -1005,54 +1032,69 @@
 
         // Load voting schedule from Firebase
         async function loadSchedule() {
+            // Load voting schedule on page load
             try {
-                let scheduleData = null;
-                
-                // Try Firebase first
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    const snapshot = await firebase.database().ref('votingSchedule').once('value');
-                    scheduleData = snapshot.val();
-                    
-                    // If Firebase returns null, clear localStorage to prevent stale data
-                    if (!scheduleData) {
-                        console.log('Firebase returned null for votingSchedule, clearing localStorage');
-                        localStorage.removeItem('votingSchedule');
+                const response = await fetch(window.location.origin + '/api/voting-schedule');
+                const data = await response.json();
+                if (data.success && data.schedule) {
+                    const schedule = data.schedule;
+                    if (schedule.startTime) {
+                        const startDate = new Date(schedule.startTime);
+                        document.getElementById('schedule-start').value = startDate.toISOString().slice(0, 16);
+                    }
+                    if (schedule.endTime) {
+                        const endDate = new Date(schedule.endTime);
+                        document.getElementById('schedule-end').value = endDate.toISOString().slice(0, 16);
                     }
                 }
+            } catch (e) {
+                console.log('Could not load schedule:', e);
+            }
+            updateScheduleStatus();
+        }
+
+        async function loadRegisteredUsers() {
+            const tbody = document.getElementById('registered-users-table');
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+            
+            try {
+                const response = await fetch('/api/debug/users');
+                const users = await response.json();
                 
-                // Only fallback to localStorage if Firebase is not available
-                if (!scheduleData && typeof firebase === 'undefined') {
-                    const localSchedule = localStorage.getItem('votingSchedule');
-                    if (localSchedule) {
-                        scheduleData = JSON.parse(localSchedule);
-                        console.log('Loaded schedule from localStorage (Firebase not available):', scheduleData);
-                    }
+                if (!users || Object.keys(users).length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No registered users</td></tr>';
+                    return;
                 }
                 
-                if (scheduleData) {
-                    // Populate the form fields
-                    const startDate = new Date(scheduleData.startTime);
-                    const endDate = new Date(scheduleData.endTime);
+                let html = '';
+                let index = 1;
+                for (const [studentId, user] of Object.entries(users)) {
+                    const photoHtml = user.photo && user.photo.startsWith('data:') 
+                        ? `<img src="${user.photo}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">` 
+                        : '<span style="color:#999;">No Photo</span>';
                     
-                    document.getElementById('schedule-start').value = formatDateTimeLocal(startDate);
-                    document.getElementById('schedule-end').value = formatDateTimeLocal(endDate);
+                    const registeredDate = user.registeredAt 
+                        ? new Date(user.registeredAt).toLocaleDateString() + ' ' + new Date(user.registeredAt).toLocaleTimeString()
+                        : '-';
                     
-                    updateScheduleStatus(scheduleData);
-                } else {
-                    // Clear form fields if no schedule
-                    document.getElementById('schedule-start').value = '';
-                    document.getElementById('schedule-end').value = '';
-                    
-                    const statusDiv = document.getElementById('schedule-status');
-                    statusDiv.innerHTML = `<p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;"><i class="fas fa-info-circle"></i> No voting schedule configured. Set the voting schedule above.</p>`;
-                    statusDiv.style.background = 'var(--surface-alt)';
-                    statusDiv.style.borderColor = 'var(--border)';
+                    html += `<tr>
+                        <td>${index}</td>
+                        <td>${photoHtml}</td>
+                        <td>${user.name || '-'}</td>
+                        <td>${user.studentId || studentId}</td>
+                        <td>${user.email || '-'}</td>
+                        <td>${user.department || '-'}</td>
+                        <td>${registeredDate}</td>
+                    </tr>`;
+                    index++;
                 }
+                tbody.innerHTML = html;
             } catch (error) {
-                console.error('Error loading schedule:', error);
+                console.error('Error loading users:', error);
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Error loading users</td></tr>';
             }
         }
-        
+
         async function clearSchedule() {
             if (confirm('Are you sure you want to clear the voting schedule? This will remove the schedule from both Firebase and local storage.')) {
                 try {
@@ -1164,6 +1206,7 @@
         renderResults();
         loadSchedule(); // Load voting schedule on page load
         checkPublishStatus(); // Check if results are published
+        loadRegisteredUsers(); // Load registered users with photos
         // Setup real-time listener for automatic updates
         setupRealtimeListener();
     </script>
