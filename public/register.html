@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - UniVote</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Face-api.js for face detection -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -325,7 +327,22 @@
     <script>
         let photoData = null;
         let cameraStream = null;
-        
+        let faceDetectionLoaded = false;
+
+        // Load face detection models on page load
+        async function loadFaceModels() {
+            try {
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@face-api/cdn@0.22.2/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                faceDetectionLoaded = true;
+                console.log('Face detection loaded');
+            } catch (e) {
+                console.error('Face detection load error:', e);
+                faceDetectionLoaded = false;
+            }
+        }
+        loadFaceModels();
+
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
             var wrapper = input.closest('.password-wrapper');
@@ -395,23 +412,46 @@
             const preview = document.getElementById('photo-preview');
             const placeholder = document.getElementById('photo-placeholder');
             const photoError = document.getElementById('photo-error');
-            
+
             // Wait for video to be ready
             if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
                 photoError.textContent = 'Camera is not ready. Please wait a moment and try again.';
                 photoError.style.display = 'block';
                 return;
             }
-            
+
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
+
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
-            
+
+            // Check for face if face detection is loaded
+            if (faceDetectionLoaded && typeof faceapi !== 'undefined') {
+                try {
+                    const detections = faceapi.detectAllFacesSync(canvas, new faceapi.TinyFaceDetectorOptions());
+
+                    if (!detections || detections.length === 0) {
+                        photoError.textContent = 'This is not your Facial Image. Please Give the Correct Image that Recognized you in Future. Thanks For your efforts and participating on the Election 😊';
+                        photoError.style.display = 'block';
+                        return;
+                    }
+
+                    if (detections.length > 1) {
+                        photoError.textContent = 'Multiple faces detected! Please take a photo with only your face.';
+                        photoError.style.display = 'block';
+                        return;
+                    }
+
+                    console.log('Face detected:', detections[0]);
+                } catch (e) {
+                    console.log('Face detection error:', e);
+                }
+            }
+
             // Use 100% quality - no size limit
             photoData = canvas.toDataURL('image/jpeg', 1.0);
-            
+
             preview.src = photoData;
             preview.style.display = 'block';
             placeholder.style.display = 'none';
@@ -449,12 +489,45 @@
                 error.style.display = 'none';
                 
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = async function(e) {
                     photoData = e.target.result;
                     preview.src = photoData;
                     preview.style.display = 'block';
                     placeholder.style.display = 'none';
                     error.style.display = 'none';
+
+                    // Check for face if face detection is loaded
+                    if (faceDetectionLoaded && typeof faceapi !== 'undefined') {
+                        try {
+                            const img = new Image();
+                            img.src = photoData;
+                            await new Promise(resolve => img.onload = resolve);
+
+                            const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions());
+
+                            if (detections.length === 0) {
+                                error.textContent = 'This is not your Facial Image. Please Give the Correct Image that Recognized you in Future. Thanks For your efforts and participating on the Election 😊';
+                                error.style.display = 'block';
+                                preview.style.display = 'none';
+                                placeholder.style.display = 'block';
+                                photoData = null;
+                                return;
+                            }
+
+                            if (detections.length > 1) {
+                                error.textContent = 'Multiple faces detected! Please upload a photo with only your face.';
+                                error.style.display = 'block';
+                                preview.style.display = 'none';
+                                placeholder.style.display = 'block';
+                                photoData = null;
+                                return;
+                            }
+
+                            console.log('Face detected in upload:', detections[0]);
+                        } catch (e) {
+                            console.log('Face detection error:', e);
+                        }
+                    }
                 };
                 reader.onerror = function(e) {
                     error.textContent = 'Error reading image file';
@@ -518,8 +591,8 @@
                 errorMessage.style.display = 'block';
                 return;
             }
-            
-            // Validate password - just minimum 6 characters
+
+            // Simple password validation - minimum 6 characters
             if (password.length < 6) {
                 errorMessage.textContent = 'Password must be at least 6 characters';
                 errorMessage.style.display = 'block';
