@@ -2,6 +2,12 @@
   "version": 2,
   "builds": [{"src": "index.js", "use": "@vercel/node"}],
   "routes": [
+    {"src": "/api/results", "dest": "/index.js"},
+    {"src": "/api/register", "dest": "/index.js"},
+    {"src": "/api/login", "dest": "/index.js"},
+    {"src": "/api/vote", "dest": "/index.js"},
+    {"src": "/api/debug/(.*)", "dest": "/index.js"},
+    {"src": "/api/admin/(.*)", "dest": "/index.js"},
     {"src": "/api/(.*)", "dest": "/index.js"},
     {"src": "/(.*)", "dest": "/index.js"}
   ]
