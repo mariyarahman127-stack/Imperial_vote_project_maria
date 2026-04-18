@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - UniVote</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Face-api.js for face detection -->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -332,6 +334,23 @@
     <script>
         let photoData = null;
         let cameraStream = null;
+        let faceDetectionLoaded = false;
+        
+        // Load face detection models
+        async function loadFaceModels() {
+            try {
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@face-api/cdn@0.22.2/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                faceDetectionLoaded = true;
+                console.log('Face detection models loaded');
+            } catch (e) {
+                console.error('Error loading face models:', e);
+            }
+        }
+        
+        // Load models on page load
+        loadFaceModels();
         
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
@@ -385,17 +404,56 @@
                 });
         }
         
-        function capturePhoto() {
+        async function capturePhoto() {
             const video = document.getElementById('camera-video');
             const canvas = document.getElementById('camera-canvas');
             const preview = document.getElementById('photo-preview');
             const placeholder = document.getElementById('photo-placeholder');
+            const photoError = document.getElementById('photo-error');
             
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
+            
+            // Detect faces in the image
+            if (faceDetectionLoaded) {
+                try {
+                    const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions());
+                    
+                    if (detections.length === 0) {
+                        // No face detected
+                        photoError.textContent = 'No face detected! Please take a photo with your face clearly visible.';
+                        photoError.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (detections.length > 1) {
+                        // Multiple faces detected
+                        photoError.textContent = 'Multiple faces detected! Please take a photo with only your face.';
+                        photoError.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Check if face is large enough (at least 20% of image)
+                    const detection = detections[0];
+                    const faceBox = detection.box;
+                    const canvasArea = canvas.width * canvas.height;
+                    const faceArea = faceBox.width * faceBox.height;
+                    const faceRatio = faceArea / canvasArea;
+                    
+                    if (faceRatio < 0.15) {
+                        photoError.textContent = 'Please move closer! Your face should be larger in the photo.';
+                        photoError.style.display = 'block';
+                        return;
+                    }
+                    
+                    console.log('Face detected successfully:', detections[0]);
+                } catch (e) {
+                    console.error('Face detection error:', e);
+                }
+            }
             
             // Use 100% quality for larger image size
             photoData = canvas.toDataURL('image/jpeg', 1.0);
@@ -419,7 +477,7 @@
             }
         }
         
-        function previewPhoto() {
+        async function previewPhoto() {
             const input = document.getElementById('photo-input');
             const preview = document.getElementById('photo-preview');
             const placeholder = document.getElementById('photo-placeholder');
@@ -445,11 +503,44 @@
                 error.style.display = 'none';
                 
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
+                reader.onload = async function(e) {
+                    photoData = e.target.result;
+                    preview.src = photoData;
                     preview.style.display = 'block';
                     placeholder.style.display = 'none';
-                    photoData = e.target.result;
+                    
+                    // Check for face in uploaded image
+                    if (faceDetectionLoaded) {
+                        try {
+                            const img = new Image();
+                            img.src = photoData;
+                            await new Promise(resolve => img.onload = resolve);
+                            
+                            const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions());
+                            
+                            if (detections.length === 0) {
+                                error.textContent = 'No face detected! Please upload a photo with your face clearly visible.';
+                                error.style.display = 'block';
+                                preview.style.display = 'none';
+                                placeholder.style.display = 'block';
+                                photoData = null;
+                                return;
+                            }
+                            
+                            if (detections.length > 1) {
+                                error.textContent = 'Multiple faces detected! Please upload a photo with only your face.';
+                                error.style.display = 'block';
+                                preview.style.display = 'none';
+                                placeholder.style.display = 'block';
+                                photoData = null;
+                                return;
+                            }
+                            
+                            console.log('Face detected in uploaded image:', detections[0]);
+                        } catch (e) {
+                            console.error('Face detection error:', e);
+                        }
+                    }
                 };
                 reader.readAsDataURL(file);
             }
