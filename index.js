@@ -1,11 +1,3 @@
-// =====================================================
-// UniVote Configuration - Easy to Edit
-// =====================================================
-// Just change TOTAL_VOTERS below to update all pages!
-// 1. Edit this file (index.js) - for vote limit check
-// 2. Edit config.html - for display on all pages
-const TOTAL_VOTERS = 2000;
-
 const express = require('express');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
@@ -205,12 +197,6 @@ app.post('/api/vote', async (req, res) => {
             }
         }
         
-        // Check if max voters reached (using TOTAL_VOTERS)
-        const currentVotesCount = allVotes ? allVotes.length : 0;
-        if (currentVotesCount >= TOTAL_VOTERS) {
-            return res.status(400).json({ success: false, message: 'Maximum voting limit (' + TOTAL_VOTERS + ') reached. No more votes can be cast.' });
-        }
-        
         const candidate = candidates.find(c => c.id === candidateId);
         if (!candidate) {
             return res.status(400).json({ success: false, message: 'Candidate not found' });
@@ -337,56 +323,7 @@ app.post('/api/casting-vote', (req, res) => {
     res.json({ success: true, message: `Casting vote for ${candidate.name}`, winner: candidate });
 });
 
-// Get voting schedule (public endpoint)
-app.get('/api/voting-schedule', async (req, res) => {
-    try {
-        const schedule = await firebaseRequest('GET', '/votingSchedule');
-        if (schedule && schedule.startTime && schedule.endTime) {
-            res.json({ success: true, schedule: schedule });
-        } else {
-            res.json({ success: false, message: 'Voting schedule not configured. Please contact administrator.' });
-        }
-    } catch (error) {
-        console.error('Error getting voting schedule:', error);
-        res.status(500).json({ success: false, message: 'Failed to get voting schedule' });
-    }
-});
-
 // Admin endpoint to reset all votes
-app.post('/api/admin/save-schedule', async (req, res) => {
-    const { adminKey, startTime, endTime, startTimeFormatted, endTimeFormatted, updatedAt, updatedAtFormatted } = req.body;
-    if (adminKey && adminKey !== 'admin2026') {
-        return res.status(403).json({ success: false, message: 'Unauthorized' });
-    }
-    
-    try {
-        const scheduleData = {
-            startTime: startTime,
-            endTime: endTime,
-            startTimeFormatted: startTimeFormatted,
-            endTimeFormatted: endTimeFormatted,
-            updatedAt: updatedAt || Date.now(),
-            updatedAtFormatted: updatedAtFormatted
-        };
-        
-        await firebaseRequest('PUT', '/votingSchedule', scheduleData);
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error saving schedule:', error);
-        res.status(500).json({ success: false, message: 'Failed to save schedule' });
-    }
-});
-
-app.post('/api/admin/delete-schedule', async (req, res) => {
-    try {
-        await firebaseRequest('DELETE', '/votingSchedule');
-        res.json({ success: true });
-    } catch (error) {
-        console.error('Error deleting schedule:', error);
-        res.status(500).json({ success: false, message: 'Failed to delete schedule' });
-    }
-});
-
 app.post('/api/admin/reset-votes', async (req, res) => {
     const { adminKey } = req.body;
     if (adminKey !== 'admin2026') {
@@ -396,66 +333,12 @@ app.post('/api/admin/reset-votes', async (req, res) => {
     try {
         // Delete all votes from Firebase
         await firebaseRequest('DELETE', '/votes');
-        // Delete all voters from Firebase so they can vote again
-        await firebaseRequest('DELETE', '/voters');
+        // Note: We do NOT delete voters collection to preserve admin user data
         
-        res.json({ success: true, message: 'All votes and voters have been reset' });
+        res.json({ success: true, message: 'All votes have been reset' });
     } catch (error) {
         console.error('Error resetting votes:', error);
         res.status(500).json({ success: false, message: 'Failed to reset votes' });
-    }
-});
-
-// Admin endpoint to toggle results publication
-app.post('/api/admin/toggle-publish', async (req, res) => {
-    const { action, adminKey } = req.body;
-    if (adminKey && adminKey !== 'admin2026') {
-        return res.status(403).json({ success: false, message: 'Unauthorized' });
-    }
-    
-    try {
-        const isPublish = action === 'publish';
-        await firebaseRequest('PUT', '/publishStatus', { published: isPublish });
-        res.json({ success: true, published: isPublish });
-    } catch (error) {
-        console.error('Error toggling publish:', error);
-        res.status(500).json({ success: false, message: 'Failed to update publish status' });
-    }
-});
-
-// Get publish status (public endpoint)
-app.get('/api/publish-status', async (req, res) => {
-    try {
-        const status = await firebaseRequest('GET', '/publishStatus');
-        res.json({ published: status && status.published ? true : false });
-    } catch (error) {
-        res.json({ published: false });
-    }
-});
-
-// Admin endpoint to get publish status
-app.get('/api/admin/publish-status', async (req, res) => {
-    try {
-        const status = await firebaseRequest('GET', '/publishStatus');
-        res.json({ published: status && status.published ? true : false });
-    } catch (error) {
-        res.json({ published: false });
-    }
-});
-
-// Get total votes count - public endpoint
-app.get('/api/votes-count', async (req, res) => {
-    try {
-        const votes = await firebaseRequest('GET', '/votes');
-        if (votes && typeof votes === 'object') {
-            const count = Object.keys(votes).length;
-            res.json({ success: true, count: count });
-        } else {
-            res.json({ success: true, count: 0 });
-        }
-    } catch (error) {
-        console.error('Error getting votes count:', error);
-        res.json({ success: true, count: 0 });
     }
 });
 
@@ -526,9 +409,7 @@ app.post('/api/login', async (req, res) => {
                         studentId: foundStudentId,
                         role: 'voter',
                         hasVoted: hasVoted || false,
-                        votedFor: votedFor,
-                        photo: user.photo || null,
-                        registeredAt: user.registeredAt || null
+                        votedFor: votedFor
                     }
                 });
             } else {
@@ -571,7 +452,7 @@ app.post('/api/login', async (req, res) => {
 
 // API endpoint for user registration
 app.post('/api/register', async (req, res) => {
-    const { email, name, studentId, department, password, uid, photo } = req.body;
+    const { email, name, studentId, department, password, uid } = req.body;
     if (!email || !password || !studentId) {
         return res.status(400).json({ success: false, message: 'Email, student ID and password required' });
     }
@@ -602,8 +483,8 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ success: false, message: 'This student has already voted. Cannot register again.' });
         }
         
-        // Prepare user data
-        const userData = {
+        // Save to Firebase registeredUsers node using studentId as key
+        const result = await firebaseRequest('PUT', '/registeredUsers/' + studentIdClean, {
             email: emailLower,
             name: name,
             studentId: studentIdClean,
@@ -611,18 +492,7 @@ app.post('/api/register', async (req, res) => {
             password: password,
             uid: uid || null,
             registeredAt: new Date().toISOString()
-        };
-        
-        // Add photo if provided
-        if (photo) {
-            userData.photo = photo;
-            console.log('Photo data received, length:', photo.length);
-        }
-        
-        console.log('Saving user to Firebase:', userData);
-        
-        // Save to Firebase registeredUsers node using studentId as key
-        const result = await firebaseRequest('PUT', '/registeredUsers/' + studentIdClean, userData);
+        });
         
         if (!result) {
             console.error('Failed to save user to Firebase');
