@@ -96,7 +96,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // API endpoint for user registration (moved to top)
-app.post('/api/register-test', function(req, res) {
+app.get('/api/register-test', function(req, res) {
     console.log('Registration endpoint called with method:', req.method);
     console.log('Registration endpoint called with path:', req.path);
     res.json({ success: true, message: 'Registration endpoint is working' });
