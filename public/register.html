@@ -352,12 +352,22 @@
         
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
-            var wrapper = input.closest('.password-wrapper') || input.parentElement;
-            var btn = wrapper.querySelector('.password-toggle');
-            if (!btn) {
-                // Try alternative - find button after input
-                btn = input.nextElementSibling;
+            var wrapper = input.closest('.password-wrapper');
+            if (!wrapper) {
+                // Fallback: look for next sibling button
+                var btn = input.nextElementSibling;
+                if (btn && btn.classList.contains('password-toggle')) {
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+                    } else {
+                        input.type = 'password';
+                        btn.innerHTML = '<i class="fas fa-eye"></i>';
+                    }
+                }
+                return;
             }
+            var btn = wrapper.querySelector('.password-toggle');
             if (input.type === 'password') {
                 input.type = 'text';
                 if (btn) btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
