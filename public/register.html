@@ -352,13 +352,18 @@
         
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
-            var btn = input.parentElement.querySelector('.password-toggle i');
+            var wrapper = input.closest('.password-wrapper') || input.parentElement;
+            var btn = wrapper.querySelector('.password-toggle');
+            if (!btn) {
+                // Try alternative - find button after input
+                btn = input.nextElementSibling;
+            }
             if (input.type === 'password') {
                 input.type = 'text';
-                btn.className = 'fas fa-eye-slash';
+                if (btn) btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
             } else {
                 input.type = 'password';
-                btn.className = 'fas fa-eye';
+                if (btn) btn.innerHTML = '<i class="fas fa-eye"></i>';
             }
         }
         
@@ -368,37 +373,36 @@
             
             container.classList.add('active');
             
-            // Try front camera first (selfie camera), fallback to any available camera
-            navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            // For mobile devices, use simpler constraints
+            const constraints = { 
+                video: {
                     facingMode: 'user',
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
                 } 
-            })
+            };
+            
+            // Try to get camera access
+            navigator.mediaDevices.getUserMedia(constraints)
                 .then(function(stream) {
                     cameraStream = stream;
                     video.srcObject = stream;
+                    video.play();
                 })
                 .catch(function(error) {
-                    console.error('Front camera error:', error);
-                    // Try back camera as fallback
-                    navigator.mediaDevices.getUserMedia({ 
-                        video: { 
-                            facingMode: 'environment',
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        } 
-                    })
-                    .then(function(stream) {
-                        cameraStream = stream;
-                        video.srcObject = stream;
-                    })
-                    .catch(function(err) {
-                        console.error('All cameras failed:', err);
-                        alert('Could not access camera. Please use file upload option or check camera permissions.');
-                        closeCamera();
-                    });
+                    console.error('Camera error:', error);
+                    // Try without facingMode constraint
+                    navigator.mediaDevices.getUserMedia({ video: true })
+                        .then(function(stream) {
+                            cameraStream = stream;
+                            video.srcObject = stream;
+                            video.play();
+                        })
+                        .catch(function(err) {
+                            console.error('All cameras failed:', err);
+                            closeCamera();
+                            alert('Could not access camera. Please allow camera permission and try again, or upload a photo from gallery.');
+                        });
                 });
         }
         
