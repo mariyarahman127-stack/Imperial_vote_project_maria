@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - UniVote</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Face-api.js for face detection -->
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -335,6 +334,7 @@
         let photoData = null;
         let cameraStream = null;
         let faceDetectionLoaded = false;
+        let faceApiError = null;
         
         // Load face detection models
         async function loadFaceModels() {
@@ -343,14 +343,18 @@
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 faceDetectionLoaded = true;
-                console.log('Face detection models loaded');
+                console.log('Face detection models loaded successfully');
             } catch (e) {
                 console.error('Error loading face models:', e);
+                faceApiError = e.message;
+                faceDetectionLoaded = false;
             }
         }
         
         // Load models on page load
-        loadFaceModels();
+        loadFaceModels().then(() => {
+            console.log('Face API ready:', faceDetectionLoaded);
+        });
         
         function togglePassword(inputId) {
             var input = document.getElementById(inputId);
@@ -417,14 +421,14 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             
-            // Detect faces in the image
-            if (faceDetectionLoaded) {
+            // Detect faces in the image (only if models loaded successfully)
+            if (faceDetectionLoaded && faceapi) {
                 try {
                     const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions());
                     
                     if (detections.length === 0) {
-                        // No face detected
-                        photoError.textContent = 'No face detected! Please take a photo with your face clearly visible.';
+                        // No face detected - show warning but allow retry
+                        photoError.textContent = 'No face detected! Please position your face in the center.';
                         photoError.style.display = 'block';
                         return;
                     }
@@ -436,7 +440,7 @@
                         return;
                     }
                     
-                    // Check if face is large enough (at least 20% of image)
+                    // Check if face is large enough (at least 15% of image)
                     const detection = detections[0];
                     const faceBox = detection.box;
                     const canvasArea = canvas.width * canvas.height;
@@ -452,7 +456,11 @@
                     console.log('Face detected successfully:', detections[0]);
                 } catch (e) {
                     console.error('Face detection error:', e);
+                    // Allow photo if face detection fails
                 }
+            } else if (faceApiError) {
+                console.log('Face detection not available:', faceApiError);
+                // Allow photo if face detection models failed to load
             }
             
             // Use 100% quality for larger image size
@@ -509,8 +517,8 @@
                     preview.style.display = 'block';
                     placeholder.style.display = 'none';
                     
-                    // Check for face in uploaded image
-                    if (faceDetectionLoaded) {
+                    // Check for face in uploaded image (only if models loaded)
+                    if (faceDetectionLoaded && faceapi) {
                         try {
                             const img = new Image();
                             img.src = photoData;
@@ -539,6 +547,7 @@
                             console.log('Face detected in uploaded image:', detections[0]);
                         } catch (e) {
                             console.error('Face detection error:', e);
+                            // Allow photo if face detection fails
                         }
                     }
                 };
