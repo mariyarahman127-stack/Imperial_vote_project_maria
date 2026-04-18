@@ -27,7 +27,7 @@ app.use('/api/*', (req, res, next) => {
 });
 
 // API endpoint for user registration (moved to top)
-app.post('/api/register', async (req, res) => {
+app.post('/api/user-register', async (req, res) => {
     console.log('Registration endpoint called with body:', req.body);
     const { email, name, studentId, department, password, uid, photo } = req.body;
     if (!email || !password || !studentId) {
