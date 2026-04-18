@@ -496,10 +496,10 @@
             errorMessage.style.display = 'none';
             successMessage.style.display = 'none';
             
-            // Validate email format
-            const emailRegex = /^[0-9]{5}@imperial\.edu\.bd$/i;
+            // Validate email format - accept any student ID format
+            const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i;
             if (!emailRegex.test(email)) {
-                errorMessage.textContent = 'Please use valid university email: 5-digitID@imperial.edu.bd';
+                errorMessage.textContent = 'Please use a valid email address';
                 errorMessage.style.display = 'block';
                 return;
             }
@@ -511,26 +511,9 @@
                 return;
             }
             
-            // Validate password strength
-            const passwordErrors = [];
-            if (password.length < 8) {
-                passwordErrors.push('at least 8 characters');
-            }
-            if (!/[A-Z]/.test(password)) {
-                passwordErrors.push('at least one uppercase letter');
-            }
-            if (!/[a-z]/.test(password)) {
-                passwordErrors.push('at least one lowercase letter');
-            }
-            if (!/[0-9]/.test(password)) {
-                passwordErrors.push('at least one number');
-            }
-            if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-                passwordErrors.push('at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>/?)');
-            }
-            
-            if (passwordErrors.length > 0) {
-                errorMessage.textContent = 'Password must contain: ' + passwordErrors.join(', ');
+            // Validate password - just minimum 6 characters
+            if (password.length < 6) {
+                errorMessage.textContent = 'Password must be at least 6 characters';
                 errorMessage.style.display = 'block';
                 return;
             }
