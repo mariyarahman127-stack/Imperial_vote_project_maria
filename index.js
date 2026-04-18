@@ -17,7 +17,14 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for photo data
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Debug middleware for API calls
+app.use('/api/*', (req, res, next) => {
+    console.log(`API call: ${req.method} ${req.path}`);
+    next();
+});
 
 // Firebase Configuration - Using REST API (no credentials needed)
 const FIREBASE_DB_URL = 'https://univote1-59bd1-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -571,8 +578,10 @@ app.post('/api/login', async (req, res) => {
 
 // API endpoint for user registration
 app.post('/api/register', async (req, res) => {
+    console.log('Registration endpoint called with body:', req.body);
     const { email, name, studentId, department, password, uid, photo } = req.body;
     if (!email || !password || !studentId) {
+        console.log('Missing required fields');
         return res.status(400).json({ success: false, message: 'Email, student ID and password required' });
     }
     
