@@ -26,6 +26,57 @@ app.use('/api/*', (req, res, next) => {
     next();
 });
 
+// Helper function to make Firebase REST API calls
+function firebaseRequest(method, path, data = null) {
+    return new Promise((resolve, reject) => {
+        const fullUrl = `${FIREBASE_DB_URL}${path}.json?auth=${FIREBASE_DB_SECRET}`;
+        const urlObj = new URL(fullUrl);
+
+        const options = {
+            hostname: urlObj.hostname,
+            path: urlObj.pathname + urlObj.search,
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+                try {
+                    console.log(`Firebase ${method} ${path}: Status ${res.statusCode}, Body: ${body.substring(0, 200)}`);
+                    const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
+                    if (!isSuccess) {
+                        console.error(`Firebase error: Status ${res.statusCode}, Body: ${body}`);
+                        resolve(null);
+                        return;
+                    }
+                    if (body === 'null' || body === '') {
+                        resolve({ success: true });
+                    } else if (body.includes('"error"')) {
+                        console.error('Firebase error response:', body);
+                        resolve(null);
+                    } else {
+                        resolve(JSON.parse(body));
+                    }
+                } catch (e) {
+                    console.error('Firebase parse error:', e);
+                    resolve(null);
+                }
+            });
+        });
+
+        req.on('error', reject);
+
+        if (data) {
+            req.write(JSON.stringify(data));
+        }
+        req.end();
+    });
+}
+
 // Test endpoint
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API is working' });
@@ -124,56 +175,7 @@ const election = {
     status: 'active'
 };
 
-// Helper function to make Firebase REST API calls
-function firebaseRequest(method, path, data = null) {
-    return new Promise((resolve, reject) => {
-        const fullUrl = `${FIREBASE_DB_URL}${path}.json?auth=${FIREBASE_DB_SECRET}`;
-        const urlObj = new URL(fullUrl);
-        
-        const options = {
-            hostname: urlObj.hostname,
-            path: urlObj.pathname + urlObj.search,
-            method: method,
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        };
 
-        const req = https.request(options, (res) => {
-            let body = '';
-            res.on('data', chunk => body += chunk);
-            res.on('end', () => {
-                try {
-                    console.log(`Firebase ${method} ${path}: Status ${res.statusCode}, Body: ${body.substring(0, 200)}`);
-                    const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
-                    if (!isSuccess) {
-                        console.error(`Firebase error: Status ${res.statusCode}, Body: ${body}`);
-                        resolve(null);
-                        return;
-                    }
-                    if (body === 'null' || body === '') {
-                        resolve({ success: true });
-                    } else if (body.includes('"error"')) {
-                        console.error('Firebase error response:', body);
-                        resolve(null);
-                    } else {
-                        resolve(JSON.parse(body));
-                    }
-                } catch (e) {
-                    console.error('Firebase parse error:', e);
-                    resolve(null);
-                }
-            });
-        });
-
-        req.on('error', reject);
-        
-        if (data) {
-            req.write(JSON.stringify(data));
-        }
-        req.end();
-    });
-}
 
 // Get all votes from Firebase
 async function getAllVotes() {
