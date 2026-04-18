@@ -470,11 +470,12 @@
             const successMessage = document.getElementById('success-message');
             const photoError = document.getElementById('photo-error');
             
-            // Validate photo is uploaded
+            // Validate photo is uploaded (optional now)
             if (!photoData) {
                 photoError.textContent = 'Please take your photo with camera';
                 photoError.style.display = 'block';
-                return;
+                // Don't return - allow registration without photo
+                photoData = null;
             }
             photoError.style.display = 'none';
             
@@ -531,7 +532,7 @@
                     studentId: studentId,
                     department: department,
                     password: password,
-                    photo: photoData
+                    photo: photoData || null
                 })
             })
             .then(function(response) {
