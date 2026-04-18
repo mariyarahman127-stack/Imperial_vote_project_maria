@@ -26,6 +26,11 @@ app.use('/api/*', (req, res, next) => {
     next();
 });
 
+// Test endpoint
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'API is working' });
+});
+
 // API endpoint for user registration (moved to top)
 app.post('/api/user-register', async (req, res) => {
     console.log('Registration endpoint called with body:', req.body);
@@ -854,4 +859,5 @@ if (process.env.VERCEL === undefined) {
 }
 
 // Export for Vercel
+exports.default = app;
 module.exports = app;
