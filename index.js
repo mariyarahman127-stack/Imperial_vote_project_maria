@@ -77,6 +77,18 @@ function firebaseRequest(method, path, data = null) {
     });
 }
 
+// Get all voters from Firebase
+async function getAllVoters() {
+    const data = await firebaseRequest('GET', '/voters');
+    if (!data) return {};
+    return data;
+}
+
+// Helper function to create a valid Firebase key from email
+function emailToFirebaseKey(email) {
+    return email.toLowerCase().replace(/@/g, '_at_').replace(/\./g, '_dot_');
+}
+
 // Test endpoint
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API is working' });
@@ -187,21 +199,9 @@ async function getAllVotes() {
     }));
 }
 
-// Get all voters from Firebase
-async function getAllVoters() {
-    const data = await firebaseRequest('GET', '/voters');
-    if (!data) return {};
-    return data;
-}
-
 // Save vote to Firebase
 async function saveVoteToFirebase(voteData) {
     await firebaseRequest('POST', '/votes', voteData);
-}
-
-// Helper function to create a valid Firebase key from email
-function emailToFirebaseKey(email) {
-    return email.toLowerCase().replace(/@/g, '_at_').replace(/\./g, '_dot_');
 }
 
 // Save voter to Firebase
