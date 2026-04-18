@@ -841,3 +841,4 @@ if (process.env.VERCEL === undefined) {
 
 // Export for Vercel
 module.exports = app;
+exports.default = app;
