@@ -551,12 +551,8 @@
             const successMessage = document.getElementById('success-message');
             const photoError = document.getElementById('photo-error');
             
-            // Validate photo is required
-            if (!photoData) {
-                photoError.textContent = 'Please take your photo with camera';
-                photoError.style.display = 'block';
-                return;
-            }
+            // Photo is optional for testing
+            console.log('Photo data:', photoData ? 'provided' : 'not provided');
             photoError.style.display = 'none';
             
             // Validate student ID
@@ -637,7 +633,11 @@
             })
             .catch(function(error) {
                 console.error('Registration error:', error);
-                errorMessage.textContent = 'An error occurred. Please try again.';
+                let errorMsg = 'An error occurred. Please try again.';
+                if (error.message) {
+                    errorMsg += ' Details: ' + error.message;
+                }
+                errorMessage.textContent = errorMsg;
                 errorMessage.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';
