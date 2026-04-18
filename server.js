@@ -293,10 +293,20 @@ app.post('/api/register', async (req, res) => {
     const firebaseKey = emailToFirebaseKey(emailLower);
     
     try {
-        // Check if user already exists in Firebase
+        // Check if user already exists in Firebase by email
         const registeredUsers = await firebaseRequest('GET', '/registeredUsers');
         if (registeredUsers && registeredUsers[firebaseKey]) {
-            return res.status(400).json({ success: false, message: 'Email already registered' });
+            return res.status(400).json({ success: false, message: 'This email is already registered' });
+        }
+        
+        // Check if studentId is already registered
+        if (registeredUsers) {
+            const studentIdExists = Object.values(registeredUsers).some(user => 
+                user.studentId && user.studentId.toString() === studentId.toString()
+            );
+            if (studentIdExists) {
+                return res.status(400).json({ success: false, message: 'This Student ID is already registered' });
+            }
         }
         
         // Also check if user has already voted (cannot register after voting)
