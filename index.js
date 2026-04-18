@@ -90,16 +90,65 @@ function emailToFirebaseKey(email) {
     return email.toLowerCase().replace(/@/g, '_at_').replace(/\./g, '_dot_');
 }
 
+// Check if voter exists in Firebase
+async function checkVoterInFirebase(email) {
+    const firebaseKey = emailToFirebaseKey(email);
+    const voters = await firebaseRequest('GET', '/voters');
+    if (voters && voters[firebaseKey]) {
+        return voters[firebaseKey];
+    }
+    return null;
+}
+
 // Test endpoint
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API is working' });
 });
 
-// API endpoint for user registration (moved to top)
-app.get('/api/register-test', function(req, res) {
-    console.log('Registration endpoint called with method:', req.method);
-    console.log('Registration endpoint called with path:', req.path);
-    res.json({ success: true, message: 'Registration endpoint is working' });
+// API endpoint for user registration
+app.post('/api/register', async (req, res) => {
+    const { email, name, studentId, department, password } = req.body;
+    if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email and password required' });
+    }
+
+    const emailLower = email.toLowerCase();
+    const firebaseKey = emailToFirebaseKey(emailLower);
+
+    try {
+        // Check if user already exists in Firebase
+        const registeredUsers = await firebaseRequest('GET', '/registeredUsers');
+        if (registeredUsers && registeredUsers[firebaseKey]) {
+            return res.status(400).json({ success: false, message: 'Email already registered' });
+        }
+
+        // Also check if user has already voted (cannot register after voting)
+        const existingVoter = await checkVoterInFirebase(emailLower);
+        if (existingVoter) {
+            return res.status(400).json({ success: false, message: 'This email has already voted. Cannot register again.' });
+        }
+
+        // Save to Firebase in a separate "registeredUsers" node
+        const result = await firebaseRequest('PUT', '/registeredUsers/' + firebaseKey, {
+            email: emailLower,
+            name: name,
+            studentId: studentId,
+            department: department,
+            password: password,
+            role: 'voter',
+            registeredAt: new Date().toISOString()
+        });
+
+        if (!result) {
+            console.error('Failed to save user to Firebase');
+            return res.status(500).json({ success: false, message: 'Registration failed - could not save to database' });
+        }
+
+        res.json({ success: true, message: 'Registration successful' });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ success: false, message: 'Registration failed' });
+    }
 });
 
 // Firebase Configuration - Using REST API (no credentials needed)
