@@ -397,7 +397,8 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             
-            photoData = canvas.toDataURL('image/jpeg', 0.75);
+            // Use 100% quality for larger image size
+            photoData = canvas.toDataURL('image/jpeg', 1.0);
             
             preview.src = photoData;
             preview.style.display = 'block';
