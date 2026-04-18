@@ -22,7 +22,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Debug middleware for API calls
 app.use('/api/*', (req, res, next) => {
-    console.log(`API call: ${req.method} ${req.path}`);
+    console.log(`API call: ${req.method} ${req.path} at ${new Date().toISOString()}`);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
     next();
 });
 
@@ -95,8 +96,9 @@ app.get('/api/test', (req, res) => {
 });
 
 // API endpoint for user registration (moved to top)
-app.post('/api/register-test', (req, res) => {
-    console.log('Registration endpoint called');
+app.post('/api/register-test', function(req, res) {
+    console.log('Registration endpoint called with method:', req.method);
+    console.log('Registration endpoint called with path:', req.path);
     res.json({ success: true, message: 'Registration endpoint is working' });
 });
 
@@ -792,6 +794,12 @@ if (process.env.VERCEL === undefined) {
         console.log(`UniVote server running on http://localhost:${PORT}`);
     });
 }
+
+// Catch-all route for debugging
+app.use('*', (req, res, next) => {
+    console.log(`Catch-all: ${req.method} ${req.originalUrl}`);
+    next();
+});
 
 // Export for Vercel
 exports.default = app;
