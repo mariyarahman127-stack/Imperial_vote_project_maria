@@ -111,12 +111,15 @@ app.post('/api/register', async (req, res) => {
         }
 
         // Check if studentId is already registered
-        if (registeredUsers) {
-            const studentIdExists = Object.values(registeredUsers).some(user => 
-                user.studentId && user.studentId.toString() === studentId.toString()
-            );
-            if (studentIdExists) {
-                return res.status(400).json({ success: false, message: 'This Student ID is already registered' });
+        if (registeredUsers && typeof registeredUsers === 'object') {
+            const usersArray = Object.values(registeredUsers);
+            if (Array.isArray(usersArray)) {
+                const studentIdExists = usersArray.some(user => 
+                    user && user.studentId && user.studentId.toString() === studentId.toString()
+                );
+                if (studentIdExists) {
+                    return res.status(400).json({ success: false, message: 'This Student ID is already registered' });
+                }
             }
         }
 
