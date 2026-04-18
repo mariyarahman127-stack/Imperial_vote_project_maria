@@ -599,8 +599,8 @@
             submitBtn.textContent = 'Creating Account...';
             
             // Call the API for registration
-            fetch('/api/register-test', {
-                method: 'GET',
+            fetch('/api/register', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: email,
