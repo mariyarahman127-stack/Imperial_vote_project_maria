@@ -376,37 +376,34 @@
             
             container.classList.add('active');
             
-            // For mobile devices, use simpler constraints
+            // Try front camera first (for selfie), fallback to any camera
             const constraints = { 
-                video: {
-                    facingMode: 'user',
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                video: { 
+                    facingMode: 'user'
                 } 
             };
             
-            // Try to get camera access
             navigator.mediaDevices.getUserMedia(constraints)
+            .then(function(stream) {
+                cameraStream = stream;
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function(error) {
+                console.error('Camera error:', error);
+                // Try any available camera without facingMode
+                navigator.mediaDevices.getUserMedia({ video: true })
                 .then(function(stream) {
                     cameraStream = stream;
                     video.srcObject = stream;
                     video.play();
                 })
-                .catch(function(error) {
-                    console.error('Camera error:', error);
-                    // Try without facingMode constraint
-                    navigator.mediaDevices.getUserMedia({ video: true })
-                        .then(function(stream) {
-                            cameraStream = stream;
-                            video.srcObject = stream;
-                            video.play();
-                        })
-                        .catch(function(err) {
-                            console.error('All cameras failed:', err);
-                            closeCamera();
-                            alert('Could not access camera. Please allow camera permission and try again, or upload a photo from gallery.');
-                        });
+                .catch(function(err) {
+                    console.error('All cameras failed:', err);
+                    closeCamera();
+                    alert('Could not access camera. Please allow camera permission in your browser settings, or upload a photo from gallery instead.');
                 });
+            });
         }
         
         function capturePhoto() {
@@ -416,18 +413,25 @@
             const placeholder = document.getElementById('photo-placeholder');
             const photoError = document.getElementById('photo-error');
             
+            // Wait for video to be ready
+            if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
+                photoError.textContent = 'Camera is not ready. Please wait a moment and try again.';
+                photoError.style.display = 'block';
+                return;
+            }
+            
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0);
             
-            // Check for face if face detection is loaded
-            if (faceDetectionLoaded && typeof faceapi !== 'undefined') {
+            // Always check for face - if not loaded, try without it
+            if (typeof faceapi !== 'undefined') {
                 try {
-                    const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions());
+                    const detections = faceapi.detectAllFacesSync(canvas, new faceapi.TinyFaceDetectorOptions());
                     
-                    if (detections.length === 0) {
+                    if (!detections || detections.length === 0) {
                         photoError.textContent = 'This is not your Facial Image. Please Give the Correct Image that Recognized you in Future. Thanks For your efforts and participating on the Election 😊';
                         photoError.style.display = 'block';
                         return;
@@ -451,6 +455,9 @@
             preview.src = photoData;
             preview.style.display = 'block';
             placeholder.style.display = 'none';
+            closeCamera();
+            document.getElementById('photo-error').style.display = 'none';
+        }
             
             closeCamera();
             document.getElementById('photo-error').style.display = 'none';
