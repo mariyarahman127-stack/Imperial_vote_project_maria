@@ -14,7 +14,6 @@ app.use(express.json());
 // Serve static files
 app.use(express.static(path.join(__dirname, '.')));
 
-<<<<<<< HEAD
 // Helper function to make Firebase REST API calls
 function firebaseRequest(method, path, data = null) {
     return new Promise((resolve, reject) => {
