@@ -1,0 +1,65 @@
+[
+    {
+        "id": 1,
+        "name": "Swarna Roy",
+        "department": "Lecturer, CSE Department",
+        "symbol": "📖",
+        "symbolName": "Book",
+        "color": "#e94560",
+        "votes": 0
+    },
+    {
+        "id": 2,
+        "name": "Sumaiya Akter",
+        "department": "Lecturer, CSE Department",
+        "symbol": "🌹",
+        "symbolName": "Rose",
+        "color": "#4361ee",
+        "votes": 0
+    },
+    {
+        "id": 3,
+        "name": "Sohely Sajlin",
+        "department": "Lecturer, CSE Department",
+        "symbol": "✈️",
+        "symbolName": "Airplane",
+        "color": "#00d9a5",
+        "votes": 0
+    },
+    {
+        "id": 4,
+        "name": "Mazharul Islam",
+        "department": "Lecturer, CSE Department",
+        "symbol": "🥭",
+        "symbolName": "Mango",
+        "color": "#ffc107",
+        "votes": 0
+    },
+    {
+        "id": 5,
+        "name": "Jahangir Polash",
+        "department": "Lecturer, CSE Department",
+        "symbol": "🦜",
+        "symbolName": "Parrot",
+        "color": "#9c27b0",
+        "votes": 0
+    },
+    {
+        "id": 6,
+        "name": "Marium Khanom",
+        "department": "Student, CSE Department",
+        "symbol": "🦉",
+        "symbolName": "Owl",
+        "color": "#14b8a6",
+        "votes": 0
+    },
+    {
+        "id": 7,
+        "name": "Jahid Hasan",
+        "department": "Student, ECE Department",
+        "symbol": "🕘",
+        "symbolName": "Watch",
+        "color": "#00d9a5",
+        "votes": 0
+    }
+]

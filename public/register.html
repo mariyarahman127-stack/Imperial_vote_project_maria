@@ -6,7 +6,9 @@
     <title>Register - UniVote</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Face-api.js for face detection -->
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"
+            onload="console.log('face-api.js loaded successfully'); window.faceApiLoaded = true;"
+            onerror="console.error('Failed to load face-api.js from CDN'); window.faceApiLoaded = false;"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -128,7 +130,8 @@
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 20px;
-            text-color: #991b1b;
+            color: #991b1b;
+            white-space: pre-line;
             display: none;
         }
         .password-wrapper { position: relative; display: inline-block; width: 100%; }
@@ -229,11 +232,19 @@
             height: 100%;
             object-fit: cover;
         }
-        .photo-section-bottom .photo-preview-container .placeholder {
-            font-size: 40px;
-            color: #667eea;
-        }
-    </style>
+         .photo-section-bottom .photo-preview-container .placeholder {
+             font-size: 40px;
+             color: #667eea;
+         }
+         .photo-error {
+             color: #ef4444;
+             font-size: 13px;
+             margin-top: 8px;
+             text-align: left;
+             white-space: pre-line;
+             display: none;
+         }
+     </style>
 </head>
 <body data-page="register">
     <div class="register-card">
@@ -298,10 +309,18 @@
                     <img id="photo-preview" style="display: none;" src="" alt="Preview">
                     <span class="placeholder" id="photo-placeholder">📷</span>
                 </div>
-                <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="previewPhoto()" style="display: none;">
-                <button type="button" class="btn-take-photo" onclick="document.getElementById('photo-input').click()">📷 Take Photo with Camera</button>
-                <p style="font-size: 12px; color: #666; margin-top: 8px;">Click to take your photo with camera or select from gallery</p>
-                <p class="photo-error" id="photo-error">Please take your photo</p>
+                <input type="file" id="photo-input" accept="image/*" onchange="previewPhoto()" style="display: none;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button type="button" class="btn-take-photo" onclick="openCamera()">📷 Take Photo with Camera</button>
+                    <button type="button" class="btn-take-photo" onclick="document.getElementById('photo-input').click()">📁 Upload from Gallery</button>
+                </div>
+                 <p style="font-size: 12px; color: #666; margin-top: 8px;">
+                    Take a clear photo of your face or upload a portrait. <strong>Human face verification required.</strong>
+                </p>
+                <p class="photo-error" id="photo-error"></p>
+                <p id="face-status" style="font-size: 12px; color: #f59e0b; margin-top: 8px; min-height: 18px;">
+                    ⏳ Initializing face detection...
+                </p>
             </div>
 
             <button type="submit" class="btn" id="submit-btn">
@@ -319,331 +338,648 @@
         <video id="camera-video" autoplay playsinline></video>
         <canvas id="camera-canvas"></canvas>
         <div class="camera-controls">
-            <button class="btn-capture" onclick="capturePhoto()">📸 Take Photo</button>
+            <button class="btn-capture" onclick="capturePhoto()">📸 Capture Photo</button>
             <button class="btn-cancel-camera" onclick="closeCamera()">✕ Cancel</button>
         </div>
     </div>
 
-    <script>
+<script>
+        const FACE_RULES = {
+            minBrightness: 30,
+            minContrast: 18,
+            minConfidence: 0.75,
+            minFaceRatio: 0.08,
+            maxFaceRatio: 0.7,
+            maxVerificationAgeMs: 10 * 60 * 1000,
+            maxUploadSizeBytes: 8 * 1024 * 1024
+        };
+
         let photoData = null;
         let cameraStream = null;
         let faceDetectionLoaded = false;
+        let landmarkModelLoaded = false;
+        let loadAttempts = 0;
+        const MAX_ATTEMPTS = 3;
+        let faceVerified = false;
+        let faceVerification = null;
 
-        // Load face detection models on page load
-        async function loadFaceModels() {
-            try {
-                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@face-api/cdn@0.22.2/models';
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                faceDetectionLoaded = true;
-                console.log('Face detection loaded');
-            } catch (e) {
-                console.error('Face detection load error:', e);
-                faceDetectionLoaded = false;
-            }
+        function setStatus(message, color) {
+            const el = document.getElementById('face-status');
+            if (!el) return;
+            el.textContent = message;
+            el.style.color = color;
         }
-        loadFaceModels();
 
-        function togglePassword(inputId) {
-            var input = document.getElementById(inputId);
-            var wrapper = input.closest('.password-wrapper');
-            if (!wrapper) {
-                // Fallback: look for next sibling button
-                var btn = input.nextElementSibling;
-                if (btn && btn.classList.contains('password-toggle')) {
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-                    } else {
-                        input.type = 'password';
-                        btn.innerHTML = '<i class="fas fa-eye"></i>';
-                    }
-                }
+        function setPhotoError(message) {
+            const el = document.getElementById('photo-error');
+            if (!el) return;
+            if (!message) {
+                el.textContent = '';
+                el.style.display = 'none';
                 return;
             }
-            var btn = wrapper.querySelector('.password-toggle');
-            if (input.type === 'password') {
-                input.type = 'text';
-                if (btn) btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
-            } else {
-                input.type = 'password';
-                if (btn) btn.innerHTML = '<i class="fas fa-eye"></i>';
-            }
+            el.textContent = message;
+            el.style.display = 'block';
         }
-        
-        function openCamera() {
-            const container = document.getElementById('camera-container');
-            const video = document.getElementById('camera-video');
-            
-            container.classList.add('active');
-            
-            // Try front camera first (for selfie), fallback to any camera
-            const constraints = { 
-                video: { 
-                    facingMode: 'user'
-                } 
-            };
-            
-            navigator.mediaDevices.getUserMedia(constraints)
-            .then(function(stream) {
-                cameraStream = stream;
-                video.srcObject = stream;
-                video.play();
-            })
-            .catch(function(error) {
-                console.error('Camera error:', error);
-                // Try any available camera without facingMode
-                navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    cameraStream = stream;
-                    video.srcObject = stream;
-                    video.play();
-                })
-                .catch(function(err) {
-                    console.error('All cameras failed:', err);
-                    closeCamera();
-                    alert('Could not access camera. Please allow camera permission in your browser settings, or upload a photo from gallery instead.');
-                });
+
+        function waitForVideo(videoEl, timeout = 5000) {
+            return new Promise((resolve, reject) => {
+                if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                    resolve();
+                    return;
+                }
+
+                const start = Date.now();
+                const timer = setInterval(() => {
+                    if (videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+                        clearInterval(timer);
+                        resolve();
+                    } else if (Date.now() - start > timeout) {
+                        clearInterval(timer);
+                        reject(new Error('Camera stream timed out.'));
+                    }
+                }, 100);
             });
         }
-        
-        function capturePhoto() {
+
+        function getImageQualityMetrics(canvas) {
+            const ctx = canvas.getContext('2d');
+            const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const stride = 16;
+            let sum = 0;
+            let sumSq = 0;
+            let count = 0;
+
+            for (let i = 0; i < data.length; i += 4 * stride) {
+                const lum = (data[i] * 0.299) + (data[i + 1] * 0.587) + (data[i + 2] * 0.114);
+                sum += lum;
+                sumSq += lum * lum;
+                count++;
+            }
+
+            const brightness = count > 0 ? sum / count : 0;
+            const variance = count > 0 ? (sumSq / count) - (brightness * brightness) : 0;
+            const contrast = variance > 0 ? Math.sqrt(variance) : 0;
+
+            return { brightness, contrast };
+        }
+
+        function averagePoint(points) {
+            const total = points.reduce((acc, p) => ({ x: acc.x + p.x, y: acc.y + p.y }), { x: 0, y: 0 });
+            return { x: total.x / points.length, y: total.y / points.length };
+        }
+
+        function distance(a, b) {
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            return Math.sqrt((dx * dx) + (dy * dy));
+        }
+
+        function resolveDetection(detectionObj) {
+            if (!detectionObj) return null;
+            if (detectionObj.detection && detectionObj.detection.box) {
+                return {
+                    score: detectionObj.detection.score,
+                    box: detectionObj.detection.box
+                };
+            }
+            if (detectionObj.box && typeof detectionObj.score === 'number') {
+                return {
+                    score: detectionObj.score,
+                    box: detectionObj.box
+                };
+            }
+            return null;
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.async = true;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        async function ensureFaceApiLibrary() {
+            if (typeof faceapi !== 'undefined') return true;
+            const sources = [
+                'https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js',
+                'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js'
+            ];
+            for (const src of sources) {
+                try {
+                    await loadScript(src);
+                    if (typeof faceapi !== 'undefined') return true;
+                } catch (scriptErr) {
+                    console.warn('Face API script load failed from', src, scriptErr);
+                }
+            }
+            return false;
+        }
+
+        async function loadModels(forceRetry) {
+            if (faceDetectionLoaded) return true;
+            if (!forceRetry && loadAttempts >= MAX_ATTEMPTS) return false;
+
+            const faceApiReady = await ensureFaceApiLibrary();
+            if (!faceApiReady) {
+                setStatus('Face library unavailable. Check internet and refresh.', '#ef4444');
+                return false;
+            }
+
+            loadAttempts++;
+            setStatus('Loading face verification model...', '#f59e0b');
+
+            try {
+                const tinyCandidates = [
+                    '/face-api-models',
+                    './face-api-models',
+                    'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights',
+                    'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/weights'
+                ];
+                let tinyLoaded = false;
+                for (const modelUrl of tinyCandidates) {
+                    try {
+                        await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+                        tinyLoaded = true;
+                        break;
+                    } catch (tinyErr) {
+                        console.warn('Tiny model load failed from', modelUrl, tinyErr);
+                    }
+                }
+                if (!tinyLoaded) {
+                    throw new Error('Tiny face detector model could not be loaded from local/CDN paths.');
+                }
+
+                const landmarkCandidates = [
+                    '/face-api-models',
+                    './face-api-models',
+                    'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights',
+                    'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/weights'
+                ];
+                landmarkModelLoaded = false;
+                for (const modelUrl of landmarkCandidates) {
+                    try {
+                        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(modelUrl);
+                        landmarkModelLoaded = true;
+                        break;
+                    } catch (landmarkErr) {
+                        console.warn('Landmark model load failed from', modelUrl, landmarkErr);
+                    }
+                }
+
+                faceDetectionLoaded = true;
+                if (landmarkModelLoaded) {
+                    setStatus('Face verification ready', '#10b981');
+                } else {
+                    setStatus('Face detector ready (landmark model unavailable)', '#f59e0b');
+                }
+                return true;
+            } catch (error) {
+                console.error('Face model load failed:', error);
+                if (loadAttempts >= MAX_ATTEMPTS) {
+                    setStatus('Face verification unavailable. Registration is blocked.', '#ef4444');
+                } else {
+                    setStatus('Retrying face model load...', '#f59e0b');
+                    setTimeout(() => loadModels(false), 2000);
+                }
+                return false;
+            }
+        }
+
+        async function analyzeHumanFace(canvas, source) {
+            const modelReady = await loadModels(true);
+            if (!modelReady) {
+                return {
+                    ok: false,
+                    reason: 'Face verification service is not ready. Please wait and try again.'
+                };
+            }
+
+            const quality = getImageQualityMetrics(canvas);
+            if (quality.brightness < FACE_RULES.minBrightness) {
+                return { ok: false, reason: 'Image is too dark/black. Use better lighting.' };
+            }
+            if (quality.contrast < FACE_RULES.minContrast) {
+                return { ok: false, reason: 'Image quality is too flat. Use a clear, real portrait photo.' };
+            }
+
+            const options = new faceapi.TinyFaceDetectorOptions({
+                inputSize: 416,
+                scoreThreshold: 0.5
+            });
+
+            const allDetections = await faceapi.detectAllFaces(canvas, options);
+            if (!allDetections || allDetections.length === 0) {
+                return { ok: false, reason: 'No human face detected.' };
+            }
+            if (allDetections.length > 1) {
+                return { ok: false, reason: 'Multiple faces detected. Only one person is allowed.' };
+            }
+
+            const singleDetection = await faceapi.detectSingleFace(canvas, options);
+            const resolved = resolveDetection(singleDetection);
+            if (!resolved || !resolved.box || typeof resolved.score !== 'number') {
+                return {
+                    ok: false,
+                    reason: 'Face verification failed due to invalid detection format. Try again.'
+                };
+            }
+
+            const score = resolved.score;
+            const box = resolved.box;
+            const faceRatio = (box.width * box.height) / (canvas.width * canvas.height);
+
+            if (score < FACE_RULES.minConfidence) {
+                return {
+                    ok: false,
+                    reason: `Face confidence too low (${Math.round(score * 100)}%). Use a clearer front-facing photo.`
+                };
+            }
+
+            if (faceRatio < FACE_RULES.minFaceRatio) {
+                return { ok: false, reason: 'Face is too small. Move closer to camera or crop tighter.' };
+            }
+            if (faceRatio > FACE_RULES.maxFaceRatio) {
+                return { ok: false, reason: 'Face is too close to the camera. Keep full head and shoulders visible.' };
+            }
+
+            const marginsOk =
+                box.x > canvas.width * 0.02 &&
+                box.y > canvas.height * 0.02 &&
+                (box.x + box.width) < canvas.width * 0.98 &&
+                (box.y + box.height) < canvas.height * 0.98;
+
+            if (!marginsOk) {
+                return { ok: false, reason: 'Face is cropped by frame edges. Center your face fully in frame.' };
+            }
+
+            let hasLandmarks = false;
+            if (landmarkModelLoaded) {
+                const detectionWithLandmarks = await faceapi.detectSingleFace(canvas, options).withFaceLandmarks(true);
+                if (!detectionWithLandmarks || !detectionWithLandmarks.landmarks) {
+                    return {
+                        ok: false,
+                        reason: 'Detected object is not a valid human face. Use a real person photo only.'
+                    };
+                }
+
+                const landmarks = detectionWithLandmarks.landmarks;
+                const leftEye = landmarks.getLeftEye();
+                const rightEye = landmarks.getRightEye();
+                const nose = landmarks.getNose();
+                const mouth = landmarks.getMouth();
+
+                if (!leftEye.length || !rightEye.length || !nose.length || !mouth.length) {
+                    return {
+                        ok: false,
+                        reason: 'Facial landmarks are incomplete. Use a clear, unobstructed human face photo.'
+                    };
+                }
+
+                const leftEyeCenter = averagePoint(leftEye);
+                const rightEyeCenter = averagePoint(rightEye);
+                const eyeDistance = distance(leftEyeCenter, rightEyeCenter);
+                if (eyeDistance < canvas.width * 0.08) {
+                    return { ok: false, reason: 'Eyes are not clearly visible. Face the camera directly.' };
+                }
+                hasLandmarks = true;
+            }
+
+            return {
+                ok: true,
+                metadata: {
+                    verified: true,
+                    source,
+                    checkedAt: new Date().toISOString(),
+                    confidence: Number(score.toFixed(4)),
+                    faceCount: 1,
+                    faceRatio: Number(faceRatio.toFixed(4)),
+                    brightness: Number(quality.brightness.toFixed(2)),
+                    contrast: Number(quality.contrast.toFixed(2)),
+                    hasLandmarks
+                }
+            };
+        }
+
+        function closeCamera() {
+            const container = document.getElementById('camera-container');
             const video = document.getElementById('camera-video');
-            const canvas = document.getElementById('camera-canvas');
+            if (container) container.classList.remove('active');
+            if (video) video.srcObject = null;
+            if (cameraStream) {
+                cameraStream.getTracks().forEach((track) => track.stop());
+                cameraStream = null;
+            }
+        }
+
+        function setVerifiedPhoto(dataUrl, metadata) {
             const preview = document.getElementById('photo-preview');
             const placeholder = document.getElementById('photo-placeholder');
-            const photoError = document.getElementById('photo-error');
+            if (preview) {
+                preview.src = dataUrl;
+                preview.style.display = 'block';
+            }
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            photoData = dataUrl;
+            faceVerified = true;
+            faceVerification = metadata;
+            setStatus('Human face verified successfully', '#10b981');
+            setPhotoError('');
+        }
 
-            // Wait for video to be ready
-            if (!video.videoWidth || !video.videoHeight || video.readyState < 2) {
-                photoError.textContent = 'Camera is not ready. Please wait a moment and try again.';
-                photoError.style.display = 'block';
+        function resetPhoto() {
+            const preview = document.getElementById('photo-preview');
+            const placeholder = document.getElementById('photo-placeholder');
+            if (preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            photoData = null;
+            faceVerified = false;
+            faceVerification = null;
+            setPhotoError('');
+            setStatus('Please take or upload a photo for verification.', '#64748b');
+        }
+
+        async function openCamera() {
+            faceVerified = false;
+            faceVerification = null;
+            setPhotoError('');
+            loadModels(true);
+
+            const container = document.getElementById('camera-container');
+            const video = document.getElementById('camera-video');
+            if (!container || !video) return;
+
+            container.classList.add('active');
+            setStatus('Requesting camera access...', '#f59e0b');
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+                await waitForVideo(video);
+                setStatus('Camera ready. Keep one face centered and capture.', '#10b981');
+            } catch (error) {
+                closeCamera();
+                setPhotoError('Camera access denied. Use upload or allow camera permission.');
+                setStatus('Camera unavailable', '#ef4444');
+            }
+        }
+
+        async function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            if (!video || !canvas) return;
+
+            setPhotoError('');
+            setStatus('Capturing image...', '#f59e0b');
+            faceVerified = false;
+            faceVerification = null;
+
+            try {
+                await waitForVideo(video);
+            } catch (error) {
+                setPhotoError('Camera stream not ready. Please try again.');
+                setStatus('Capture failed', '#ef4444');
                 return;
             }
 
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
 
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-
-            // Check for face if face detection is loaded
-            if (faceDetectionLoaded && typeof faceapi !== 'undefined') {
-                try {
-                    const detections = faceapi.detectAllFacesSync(canvas, new faceapi.TinyFaceDetectorOptions());
-
-                    if (!detections || detections.length === 0) {
-                        photoError.textContent = 'This is not your Facial Image. Please Give the Correct Image that Recognized you in Future. Thanks For your efforts and participating on the Election 😊';
-                        photoError.style.display = 'block';
-                        return;
-                    }
-
-                    if (detections.length > 1) {
-                        photoError.textContent = 'Multiple faces detected! Please take a photo with only your face.';
-                        photoError.style.display = 'block';
-                        return;
-                    }
-
-                    console.log('Face detected:', detections[0]);
-                } catch (e) {
-                    console.log('Face detection error:', e);
-                }
-            }
-
-            // Use 100% quality - no size limit
-            photoData = canvas.toDataURL('image/jpeg', 1.0);
-
-            preview.src = photoData;
-            preview.style.display = 'block';
-            placeholder.style.display = 'none';
-            document.getElementById('photo-error').style.display = 'none';
-        }
-        
-        function closeCamera() {
-            const container = document.getElementById('camera-container');
-            container.classList.remove('active');
-            
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-        }
-        
-        function previewPhoto() {
-            const input = document.getElementById('photo-input');
-            const preview = document.getElementById('photo-preview');
-            const placeholder = document.getElementById('photo-placeholder');
-            const error = document.getElementById('photo-error');
-            
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                
-                // Validate file type
-                if (!file.type.match('image.*')) {
-                    error.textContent = 'Please select a valid image file';
-                    error.style.display = 'block';
+            setStatus('Verifying human face...', '#f59e0b');
+            try {
+                const result = await analyzeHumanFace(canvas, 'camera');
+                if (!result.ok) {
+                    setPhotoError(result.reason);
+                    setStatus('Verification failed', '#ef4444');
                     return;
                 }
-                
-                // No file size limit anymore
-                
-                error.style.display = 'none';
-                
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    photoData = e.target.result;
-                    preview.src = photoData;
-                    preview.style.display = 'block';
-                    placeholder.style.display = 'none';
-                    error.style.display = 'none';
 
-                    // Check for face if face detection is loaded
-                    if (faceDetectionLoaded && typeof faceapi !== 'undefined') {
-                        try {
-                            const img = new Image();
-                            img.src = photoData;
-                            await new Promise(resolve => img.onload = resolve);
-
-                            const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions());
-
-                            if (detections.length === 0) {
-                                error.textContent = 'This is not your Facial Image. Please Give the Correct Image that Recognized you in Future. Thanks For your efforts and participating on the Election 😊';
-                                error.style.display = 'block';
-                                preview.style.display = 'none';
-                                placeholder.style.display = 'block';
-                                photoData = null;
-                                return;
-                            }
-
-                            if (detections.length > 1) {
-                                error.textContent = 'Multiple faces detected! Please upload a photo with only your face.';
-                                error.style.display = 'block';
-                                preview.style.display = 'none';
-                                placeholder.style.display = 'block';
-                                photoData = null;
-                                return;
-                            }
-
-                            console.log('Face detected in upload:', detections[0]);
-                        } catch (e) {
-                            console.log('Face detection error:', e);
-                        }
-                    }
-                };
-                reader.onerror = function(e) {
-                    error.textContent = 'Error reading image file';
-                    error.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                setVerifiedPhoto(dataUrl, result.metadata);
+                closeCamera();
+            } catch (error) {
+                console.error('Camera verification error:', error);
+                setPhotoError('Face verification error. Please capture again.');
+                setStatus('Verification error', '#ef4444');
             }
         }
-        
-        document.getElementById('register-form').addEventListener('submit', function(e) {
+
+        async function previewPhoto() {
+            const input = document.getElementById('photo-input');
+            const canvas = document.getElementById('camera-canvas');
+            if (!input || !canvas || !input.files || !input.files[0]) return;
+
+            const file = input.files[0];
+            faceVerified = false;
+            faceVerification = null;
+            setPhotoError('');
+            setStatus('Validating uploaded image...', '#f59e0b');
+
+            if (!/^image\/(jpeg|jpg|png|webp)$/i.test(file.type)) {
+                resetPhoto();
+                input.value = '';
+                setPhotoError('Only JPG, PNG, or WEBP images are allowed.');
+                setStatus('Invalid file type', '#ef4444');
+                return;
+            }
+
+            if (file.size > FACE_RULES.maxUploadSizeBytes) {
+                resetPhoto();
+                input.value = '';
+                setPhotoError('Image is too large. Maximum size is 8MB.');
+                setStatus('File too large', '#ef4444');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function onLoad(event) {
+                try {
+                    const img = new Image();
+                    img.onload = async function onImageLoad() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+
+                        setStatus('Verifying uploaded face...', '#f59e0b');
+                        const result = await analyzeHumanFace(canvas, 'gallery');
+                        if (!result.ok) {
+                            resetPhoto();
+                            input.value = '';
+                            setPhotoError(result.reason + ' Upload a clear real human face photo.');
+                            setStatus('Upload rejected', '#ef4444');
+                            return;
+                        }
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                        setVerifiedPhoto(dataUrl, result.metadata);
+                    };
+                    img.onerror = function onImageError() {
+                        resetPhoto();
+                        input.value = '';
+                        setPhotoError('Uploaded image could not be read. Choose another file.');
+                        setStatus('Image read failed', '#ef4444');
+                    };
+                    img.src = event.target.result;
+                } catch (error) {
+                    console.error('Upload verification error:', error);
+                    resetPhoto();
+                    input.value = '';
+                    setPhotoError('Verification failed for uploaded photo. Try a different image.');
+                    setStatus('Upload verification failed', '#ef4444');
+                }
+            };
+            reader.onerror = function onReaderError() {
+                resetPhoto();
+                input.value = '';
+                setPhotoError('Failed to read selected file.');
+                setStatus('File read error', '#ef4444');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('register-form').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+            const errorMsg = document.getElementById('error-message');
+            const successMsg = document.getElementById('success-message');
+            const btn = document.getElementById('submit-btn');
+
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.toLowerCase().trim();
             const studentId = document.getElementById('studentId').value.trim();
-            const department = document.getElementById('department').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-            const submitBtn = document.getElementById('submit-btn');
-            const errorMessage = document.getElementById('error-message');
-            const successMessage = document.getElementById('success-message');
-            const photoError = document.getElementById('photo-error');
-            
-            // Photo is optional for testing
-            console.log('Photo data:', photoData ? 'provided' : 'not provided');
-            photoError.style.display = 'none';
-            
-            // Validate student ID
+            const dept = document.getElementById('department').value;
+            const pwd = document.getElementById('password').value;
+            const confirmPwd = document.getElementById('confirm-password').value;
+
+            if (!name) {
+                errorMsg.textContent = 'Enter name';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i.test(email)) {
+                errorMsg.textContent = 'Valid email required';
+                errorMsg.style.display = 'block';
+                return;
+            }
             if (!studentId || studentId.length < 4) {
-                errorMessage.textContent = 'Please enter a valid student ID';
-                errorMessage.style.display = 'block';
+                errorMsg.textContent = 'Enter valid student ID';
+                errorMsg.style.display = 'block';
                 return;
             }
-            
-            // Validate department
-            if (!department) {
-                errorMessage.textContent = 'Please select your department';
-                errorMessage.style.display = 'block';
+            if (!dept) {
+                errorMsg.textContent = 'Select department';
+                errorMsg.style.display = 'block';
                 return;
             }
-            
-            // Reset messages
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-            
-            // Validate email format - accept any student ID format
-            const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i;
-            if (!emailRegex.test(email)) {
-                errorMessage.textContent = 'Please use a valid email address';
-                errorMessage.style.display = 'block';
+            if (pwd.length < 6) {
+                errorMsg.textContent = 'Password min 6 chars';
+                errorMsg.style.display = 'block';
                 return;
             }
-            
-            // Validate password match
-            if (password !== confirmPassword) {
-                errorMessage.textContent = 'Passwords do not match!';
-                errorMessage.style.display = 'block';
+            if (pwd !== confirmPwd) {
+                errorMsg.textContent = 'Passwords do not match';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            if (!photoData) {
+                errorMsg.textContent = 'Take or upload a photo';
+                errorMsg.style.display = 'block';
                 return;
             }
 
-            // Simple password validation - minimum 6 characters
-            if (password.length < 6) {
-                errorMessage.textContent = 'Password must be at least 6 characters';
-                errorMessage.style.display = 'block';
+            if (!faceDetectionLoaded) {
+                errorMsg.textContent = 'Registration denied: face verification model is not ready yet.';
+                errorMsg.style.display = 'block';
+                setStatus('Verification model unavailable', '#ef4444');
                 return;
             }
-            
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Creating Account...';
-            
-            // Call the API for registration
-            fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: email,
-                    name: name,
-                    studentId: studentId,
-                    department: department,
-                    password: password,
-                    photo: photoData || null
-                })
-            })
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(result) {
+
+            if (!faceVerified || !faceVerification || !faceVerification.verified) {
+                errorMsg.textContent = 'Registration denied: human face verification failed.';
+                errorMsg.style.display = 'block';
+                setStatus('Verification required', '#ef4444');
+                return;
+            }
+
+            const verificationAge = Date.now() - new Date(faceVerification.checkedAt).getTime();
+            if (!Number.isFinite(verificationAge) || verificationAge > FACE_RULES.maxVerificationAgeMs) {
+                errorMsg.textContent = 'Face verification expired. Please capture/upload and verify again.';
+                errorMsg.style.display = 'block';
+                setStatus('Verification expired', '#ef4444');
+                faceVerified = false;
+                faceVerification = null;
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating Account...';
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email,
+                        name,
+                        studentId,
+                        department: dept,
+                        password: pwd,
+                        photo: photoData,
+                        faceVerification
+                    })
+                });
+
+                const result = await response.json();
                 if (result.success) {
-                    // Show success
-                    successMessage.style.display = 'block';
-                    submitBtn.textContent = 'Account Created!';
-                    
-                    // Redirect to login after 2 seconds
-                    setTimeout(function() {
+                    successMsg.style.display = 'block';
+                    btn.textContent = 'Account Created!';
+                    setTimeout(() => {
                         window.location.href = '/login.html';
                     }, 2000);
                 } else {
-                    errorMessage.textContent = result.message || 'Registration failed';
-                    errorMessage.style.display = 'block';
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Create Account';
+                    errorMsg.textContent = result.message || 'Registration failed';
+                    errorMsg.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
                 }
-            })
-            .catch(function(error) {
+            } catch (error) {
                 console.error('Registration error:', error);
-                let errorMsg = 'An error occurred. Please try again.';
-                if (error.message) {
-                    errorMsg += ' Details: ' + error.message;
-                }
-                errorMessage.textContent = errorMsg;
-                errorMessage.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Account';
-            });
+                errorMsg.textContent = 'Network error. Please try again.';
+                errorMsg.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
         });
+
+        setStatus('Initializing face verification...', '#f59e0b');
+        setTimeout(() => {
+            loadModels(false);
+        }, 400);
+
+        window.addEventListener('beforeunload', closeCamera);
     </script>
 </body>
 </html>
+
 

@@ -3,6 +3,7 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const https = require('https');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,17 +18,102 @@ app.use(express.static(path.join(__dirname, '.')));
 // Firebase Configuration
 const FIREBASE_PROJECT_ID = 'univote1-59bd1';
 const FIREBASE_DB_URL = 'https://univote1-59bd1-default-rtdb.asia-southeast1.firebasedatabase.app';
-const FIREBASE_DB_SECRET = 'VpKnONs4KHPRhuc0I79gp0RTf81C2oA45kVQIf9G'; // Replace with your actual Firebase database secret
+const FIREBASE_DB_SECRET = 'VpKnONs4KHPRhuc0I79gp0RTf81C2oA45kVQIf9G';
 
-// In-memory cache for candidates (these don't change)
-const candidates = [
-    { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book', votes: 0, color: '#e94560' },
-    { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose', votes: 0, color: '#4361ee' },
-    { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane', votes: 0, color: '#00d9a5' },
-    { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango', votes: 0, color: '#ffc107' },
-    { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot', votes: 0, color: '#9c27b0' }
-];
+// File to store candidates - EDIT THIS FILE TO CHANGE CANDIDATES
+const CANDIDATES_FILE = path.join(__dirname, 'candidates.json');
 
+// Load candidates from file
+function loadCandidatesFromFile() {
+    try {
+        if (fs.existsSync(CANDIDATES_FILE)) {
+            const data = fs.readFileSync(CANDIDATES_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch(e) {
+        console.log('Error loading candidates file:', e.message);
+    }
+    return null;
+}
+
+// Save candidates to file
+function saveCandidatesToFile(candidates) {
+    try {
+        fs.writeFileSync(CANDIDATES_FILE, JSON.stringify(candidates, null, 4));
+        return true;
+    } catch(e) {
+        console.log('Error saving candidates file:', e.message);
+        return false;
+    }
+}
+
+// Get candidates - ALWAYS reads fresh from file
+function getCandidates() {
+    const candidates = loadCandidatesFromFile();
+    // Add votes: 0 to each candidate if not present, preserve all fields
+    if (candidates) {
+        return candidates.map(c => ({
+            ...c, 
+            votes: c.votes || 0,
+            department: c.department || '',
+            symbolName: c.symbolName || '',
+            color: c.color || '#2563eb'
+        }));
+    }
+    return [];
+}
+
+function normalizeCandidate(candidate) {
+    const id = Number(candidate && candidate.id);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    const name = String((candidate && candidate.name) || '').trim();
+    const department = String((candidate && candidate.department) || '').trim();
+    const symbol = String((candidate && candidate.symbol) || '').trim();
+    const symbolName = String((candidate && candidate.symbolName) || '').trim();
+    const color = String((candidate && candidate.color) || '#2563eb').trim();
+    if (!name || !department || !symbol || !symbolName) return null;
+    return { id, name, department, symbol, symbolName, color, votes: 0 };
+}
+
+function normalizeCandidateList(rawCandidates) {
+    const list = [];
+    if (Array.isArray(rawCandidates)) {
+        for (const candidate of rawCandidates) {
+            const normalized = normalizeCandidate(candidate);
+            if (normalized) list.push(normalized);
+        }
+    } else if (rawCandidates && typeof rawCandidates === 'object') {
+        for (const candidate of Object.values(rawCandidates)) {
+            const normalized = normalizeCandidate(candidate);
+            if (normalized) list.push(normalized);
+        }
+    }
+    return list.sort((a, b) => a.id - b.id);
+}
+
+function toCandidateMap(candidateList) {
+    const map = {};
+    for (const candidate of candidateList) {
+        map[String(candidate.id)] = candidate;
+    }
+    return map;
+}
+
+async function getCandidatesFromStore() {
+    // Read from candidates.json file - edits in admin panel will update this file
+    return getCandidates();
+}
+
+async function saveCandidatesToStore(candidateList) {
+    const normalized = normalizeCandidateList(candidateList);
+    if (normalized.length === 0) {
+        throw new Error('At least one candidate is required');
+    }
+    // Save to file - this makes changes persist everywhere
+    saveCandidatesToFile(normalized);
+    cachedCandidates = normalized;
+    return normalized;
+}
 // Election config
 const election = {
     title: 'Imperial College of Engineering',
@@ -133,11 +219,32 @@ async function saveVoterToFirebase(email, voterData) {
 
 // API Routes
 app.get('/api/election', (req, res) => res.json(election));
-app.get('/api/candidates', (req, res) => res.json(candidates));
+app.get('/api/candidates', async (req, res) => {
+    try {
+        // ALWAYS load fresh from file - no caching
+        const candidates = loadCandidatesFromFile();
+        if (candidates && candidates.length > 0) {
+            const processed = candidates.map(c => ({
+                ...c,
+                votes: c.votes || 0,
+                department: c.department || '',
+                symbolName: c.symbolName || '',
+                color: c.color || '#2563eb'
+            }));
+            res.json(processed);
+        } else {
+            res.json(DEFAULT_CANDIDATES);
+        }
+    } catch (error) {
+        console.error('Error fetching candidates:', error);
+        res.json(DEFAULT_CANDIDATES);
+    }
+});
 
 app.get('/api/results', async (req, res) => {
     try {
         const votes = await getAllVotes();
+        const candidates = await getCandidatesFromStore();
         const totalVotes = votes.length;
         
         // Calculate votes per candidate
@@ -150,7 +257,12 @@ app.get('/api/results', async (req, res) => {
         });
         
         const resultCandidates = candidates.map(c => ({
-            ...c,
+            id: c.id,
+            name: c.name,
+            department: c.department || '',
+            symbol: c.symbol || '',
+            symbolName: c.symbolName || '',
+            color: c.color || '#2563eb',
             votes: voteCounts[c.id] || 0,
             percentage: totalVotes > 0 ? Math.round((voteCounts[c.id] / totalVotes) * 100) : 0
         })).sort((a, b) => b.votes - a.votes);
@@ -172,6 +284,7 @@ app.post('/api/vote', async (req, res) => {
     const emailLower = email.toLowerCase();
     
     try {
+        const candidates = await getCandidatesFromStore();
         // Check if user is registered in Firebase
         const registeredUsers = await firebaseRequest('GET', '/registeredUsers');
         const firebaseKey = emailToFirebaseKey(emailLower);
@@ -366,11 +479,108 @@ app.get('/api/admin/votes', async (req, res) => {
     }
 });
 
-app.post('/api/casting-vote', (req, res) => {
+app.get('/api/admin/candidates', async (req, res) => {
+    const { adminKey } = req.query;
+    if (adminKey !== 'admin2026') {
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+    try {
+        const candidates = await getCandidatesFromStore();
+        return res.json({ success: true, candidates });
+    } catch (error) {
+        console.error('Error loading admin candidates:', error);
+        return res.status(500).json({ success: false, message: 'Failed to load candidates' });
+    }
+});
+
+app.post('/api/admin/candidates', async (req, res) => {
+    const { adminKey, name, department, symbol, symbolName, color } = req.body || {};
+    if (adminKey !== 'admin2026') {
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+    if (!name || !department || !symbol || !symbolName) {
+        return res.status(400).json({ success: false, message: 'name, department, symbol, symbolName are required' });
+    }
+    try {
+        const candidates = await getCandidatesFromStore();
+        const normalizedName = String(name).trim().toLowerCase();
+        const normalizedSymbol = String(symbol).trim();
+        const exists = candidates.some((c) => c.name.toLowerCase() === normalizedName || c.symbol === normalizedSymbol);
+        if (exists) {
+            return res.status(400).json({ success: false, message: 'Candidate with same name or symbol already exists' });
+        }
+
+        const nextId = candidates.reduce((maxId, c) => Math.max(maxId, Number(c.id) || 0), 0) + 1;
+        const newCandidate = {
+            id: nextId,
+            name: String(name).trim(),
+            department: String(department).trim(),
+            symbol: String(symbol).trim(),
+            symbolName: String(symbolName).trim(),
+            color: String(color || '#2563eb').trim(),
+            votes: 0
+        };
+
+        const updated = await saveCandidatesToStore([...candidates, newCandidate]);
+        return res.json({ success: true, message: 'Candidate added', candidate: newCandidate, candidates: updated });
+    } catch (error) {
+        console.error('Error adding candidate:', error);
+        return res.status(500).json({ success: false, message: 'Failed to add candidate' });
+    }
+});
+
+app.delete('/api/admin/candidates/:id', async (req, res) => {
+    const { adminKey } = req.query;
+    if (adminKey !== 'admin2026') {
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const candidateId = Number(req.params.id);
+    if (!Number.isFinite(candidateId) || candidateId <= 0) {
+        return res.status(400).json({ success: false, message: 'Invalid candidate id' });
+    }
+
+    try {
+        const candidates = await getCandidatesFromStore();
+        const target = candidates.find((c) => c.id === candidateId);
+        if (!target) {
+            return res.status(404).json({ success: false, message: 'Candidate not found' });
+        }
+        if (candidates.length <= 2) {
+            return res.status(400).json({ success: false, message: 'At least 2 candidates are required' });
+        }
+
+        const votes = await getAllVotes();
+        const hasVotes = (votes || []).some((v) => Number(v.candidateId) === candidateId);
+        if (hasVotes) {
+            return res.status(400).json({ success: false, message: 'Cannot delete candidate with existing votes' });
+        }
+
+        const updated = await saveCandidatesToStore(candidates.filter((c) => c.id !== candidateId));
+        return res.json({ success: true, message: 'Candidate deleted', deletedId: candidateId, candidates: updated });
+    } catch (error) {
+        console.error('Error deleting candidate:', error);
+        return res.status(500).json({ success: false, message: 'Failed to delete candidate' });
+    }
+});
+
+// Debug endpoint to list registered users (compat with admin dashboard)
+app.get('/api/debug/users', async (req, res) => {
+    try {
+        const users = await firebaseRequest('GET', '/registeredUsers');
+        res.json(users || {});
+    } catch (error) {
+        console.error('Debug users error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/casting-vote', async (req, res) => {
     const { adminKey, candidateId } = req.body;
     if (adminKey !== 'admin2026casting') {
         return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
+    const candidates = await getCandidatesFromStore();
     const candidate = candidates.find(c => c.id === candidateId);
     if (!candidate) {
         return res.status(400).json({ success: false, message: 'Candidate not found' });
@@ -416,6 +626,58 @@ app.delete('/api/admin/user/:email', async (req, res) => {
     } catch (error) {
         console.error('Error deleting user:', error);
         res.status(500).json({ success: false, message: 'Failed to delete user' });
+    }
+});
+
+// Admin endpoint to delete a registered user by studentId key (with optional email fallback)
+app.delete('/api/admin/registered-user/:studentId', async (req, res) => {
+    const { adminKey, email } = req.query;
+    if (adminKey !== 'admin2026') {
+        return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const studentId = String(req.params.studentId || '').trim();
+    const emailLower = String(email || '').toLowerCase().trim();
+
+    if (!studentId && !emailLower) {
+        return res.status(400).json({ success: false, message: 'Student ID or email is required' });
+    }
+
+    try {
+        const users = await firebaseRequest('GET', '/registeredUsers');
+        const usersMap = users && typeof users === 'object' && !users.success ? users : {};
+        let deleteKey = null;
+
+        if (studentId && usersMap[studentId]) {
+            deleteKey = studentId;
+        } else {
+            const matchedEntry = Object.entries(usersMap).find(([key, user]) => {
+                const keyNormalized = String(key || '').toLowerCase().trim();
+                const userEmail = String((user && user.email) || '').toLowerCase().trim();
+                const userSid = String((user && user.studentId) || '').trim();
+                const sidMatch = studentId && (userSid === studentId || keyNormalized === studentId.toLowerCase());
+                const emailMatch = emailLower && (userEmail === emailLower || keyNormalized === emailLower);
+                return sidMatch || emailMatch;
+            });
+            if (matchedEntry) deleteKey = matchedEntry[0];
+        }
+
+        if (!deleteKey) {
+            return res.status(404).json({ success: false, message: 'Registered user not found' });
+        }
+
+        await firebaseRequest('DELETE', '/registeredUsers/' + deleteKey);
+
+        const afterDelete = await firebaseRequest('GET', '/registeredUsers');
+        const afterMap = afterDelete && typeof afterDelete === 'object' && !afterDelete.success ? afterDelete : {};
+        if (afterMap[deleteKey]) {
+            return res.status(500).json({ success: false, message: 'Delete failed. User still exists in database.' });
+        }
+
+        return res.json({ success: true, message: 'Registered user deleted from database', deletedKey: deleteKey });
+    } catch (error) {
+        console.error('Error deleting registered user:', error);
+        return res.status(500).json({ success: false, message: 'Failed to delete registered user' });
     }
 });
 

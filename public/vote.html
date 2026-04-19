@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/election-config.js"></script>
     <script src="js/auth-service.js"></script>
     <script src="js/firebase-service.js"></script>
     <style>
@@ -252,18 +253,40 @@
     
     <script>
         // Candidates data - hardcoded for reliability
-        const candidates = [
-            { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
-            { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
-            { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
-            { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
-            { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' }
-        ];
+        let candidates = [];
         
         let selectedCandidate = null;
         let currentUser = null;
         let hasAlreadyVoted = false;
         let votingSchedule = null;
+
+        async function loadCandidates() {
+            try {
+                const response = await fetch('/api/candidates');
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    candidates = data.map(c => ({
+                        id: Number(c.id),
+                        name: c.name,
+                        department: c.department,
+                        symbol: c.symbol,
+                        symbolName: c.symbolName
+                    }));
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to load candidates from API:', error);
+            }
+
+candidates = window.getCandidates ? window.getCandidates() : [
+                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
+                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
+                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
+                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
+                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' },
+                { id: 6, name: 'Marium Khanom', department: 'Student, CSE Department', symbol: '🦉', symbolName: 'Owl' }
+            ];
+        }
         
         // Load voting schedule from Firebase
         async function loadVotingSchedule() {
@@ -356,6 +379,7 @@
         
         async function init() {
             console.log('Initializing vote page...');
+            await loadCandidates();
             
             // Get user from localStorage
             const stored = localStorage.getItem('currentUser');

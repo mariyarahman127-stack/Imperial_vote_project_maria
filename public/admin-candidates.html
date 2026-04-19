@@ -6,135 +6,160 @@
     <title>Manage Candidates - UniVote</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#f8fafc; --card:#ffffff; --txt:#0f172a; --muted:#64748b; --border:#e2e8f0; --primary:#2563eb; --danger:#dc2626; }
+        * { box-sizing: border-box; }
+        body { margin:0; font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(--txt); }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        .top { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+        .title { font-size: 28px; font-weight:700; }
+        .muted { color:var(--muted); }
+        .row { display:grid; grid-template-columns: 1fr 1fr 1fr 1fr auto auto; gap:10px; margin:16px 0; }
+        input { width:100%; border:1px solid var(--border); border-radius:10px; padding:10px; font:inherit; }
+        .btn { border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font:inherit; font-weight:600; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-danger { background:var(--danger); color:#fff; }
+        .btn-outline { background:#fff; border:1px solid var(--border); }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+        table { width:100%; border-collapse: collapse; }
+        th, td { padding:12px 10px; border-bottom:1px solid var(--border); text-align:left; }
+        th { background:#f1f5f9; font-weight:600; }
+        .symbol { font-size: 24px; }
+        .status { margin-top: 10px; min-height: 20px; color: var(--muted); }
+        .ok { color:#15803d; }
+        .err { color:#b91c1c; }
+        @media (max-width:900px){ .row{ grid-template-columns:1fr 1fr; } }
+    </style>
 </head>
-<body data-page="admin-dashboard">
-    <div class="dashboard">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <a href="index.html" class="logo">
-                    <span class="logo-icon">🗳️</span>
-                    <span class="logo-text">UniVote</span>
-                </a>
+<body>
+    <div class="wrap">
+        <div class="top">
+            <div>
+                <div class="title">Manage Candidates</div>
+                <div class="muted">Add or delete candidates. Changes sync to voting and results APIs.</div>
             </div>
-            <nav class="sidebar-nav">
-                <a href="admin-dashboard.html" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="admin-elections.html" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    <span>Elections</span>
-                </a>
-                <a href="admin-candidates.html" class="nav-item active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                    <span>Candidates</span>
-                </a>
-                <a href="admin-voters.html" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-                    <span>Voters</span>
-                </a>
-                <a href="results.html?id=1" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                    <span>Results</span>
-                </a>
-            </nav>
-            <div class="sidebar-footer">
-                <div class="user-info">
-                    <div class="user-avatar">JS</div>
-                    <div class="user-details"><h4>Jane Smith</h4><p>Administrator</p></div>
-                </div>
-                <a href="#" class="btn btn-outline" id="logout-btn" style="width: 100%;">Logout</a>
+            <div>
+                <button class="btn btn-outline" onclick="window.location.href='admin-dashboard.html'">Back to Dashboard</button>
             </div>
-        </aside>
+        </div>
 
-        <main class="main-content">
-            <div class="dashboard-header">
-                <div>
-                    <h1 class="dashboard-title">Manage Candidates</h1>
-                    <p style="color: var(--text-secondary);">Add and manage election candidates</p>
-                </div>
-                <div class="header-actions">
-                    <button class="btn btn-primary" onclick="UI.showModal('add-candidate-modal')">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Add Candidate
-                    </button>
-                </div>
+        <div class="card" style="padding:14px;">
+            <div class="row">
+                <input id="name" placeholder="Candidate name">
+                <input id="department" placeholder="Designation / Department">
+                <input id="symbol" placeholder="Symbol (e.g. 📖)">
+                <input id="symbolName" placeholder="Symbol name">
+                <input id="color" placeholder="Color (#2563eb)">
+                <button class="btn btn-primary" onclick="addCandidate()">Add</button>
             </div>
+            <div class="status" id="status"></div>
+        </div>
 
-            <div class="cards-grid" style="grid-template-columns: repeat(4, 1fr);">
-                <div class="candidate-card" style="cursor: default;">
-                    <div class="candidate-image">🌟</div>
-                    <div class="candidate-info">
-                        <h4>Alice Johnson</h4>
-                        <p>President Candidate</p>
-                    </div>
-                </div>
-                <div class="candidate-card" style="cursor: default;">
-                    <div class="candidate-image">🔥</div>
-                    <div class="candidate-info">
-                        <h4>Bob Williams</h4>
-                        <p>President Candidate</p>
-                    </div>
-                </div>
-                <div class="candidate-card" style="cursor: default;">
-                    <div class="candidate-image">🎯</div>
-                    <div class="candidate-info">
-                        <h4>Charlie Brown</h4>
-                        <p>President Candidate</p>
-                    </div>
-                </div>
-                <div class="candidate-card" style="cursor: default;">
-                    <div class="candidate-image">💰</div>
-                    <div class="candidate-info">
-                        <h4>David Lee</h4>
-                        <p>Treasurer Candidate</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top: 2rem;">
-                <div class="card-header">
-                    <h3 class="card-title">All Candidates</h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr><th>Candidate</th><th>Election</th><th>Symbol</th><th>Current Votes</th><th>Actions</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><div style="display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.5rem;">🌟</span><strong>Alice Johnson</strong></div></td>
-                                    <td>President Election</td>
-                                    <td>🌟</td>
-                                    <td>245</td>
-                                    <td><button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</button></td>
-                                </tr>
-                                <tr>
-                                    <td><div style="display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.5rem;">🔥</span><strong>Bob Williams</strong></div></td>
-                                    <td>President Election</td>
-                                    <td>🔥</td>
-                                    <td>243</td>
-                                    <td><button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</button></td>
-                                </tr>
-                                <tr>
-                                    <td><div style="display: flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.5rem;">🎯</span><strong>Charlie Brown</strong></div></td>
-                                    <td>President Election</td>
-                                    <td>🎯</td>
-                                    <td>180</td>
-                                    <td><button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Edit</button></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
+        <div class="card" style="margin-top:14px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Symbol</th>
+                        <th>Name</th>
+                        <th>Designation</th>
+                        <th>Symbol Name</th>
+                        <th>Color</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="candidate-rows"></tbody>
+            </table>
+        </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script>
+        const ADMIN_KEY = 'admin2026';
+
+        function setStatus(message, ok) {
+            const el = document.getElementById('status');
+            el.textContent = message || '';
+            el.className = 'status ' + (message ? (ok ? 'ok' : 'err') : '');
+        }
+
+        async function fetchJson(url, options) {
+            const res = await fetch(url, options);
+            const text = await res.text();
+            let data = {};
+            try { data = text ? JSON.parse(text) : {}; } catch { data = { success:false, message:'Unexpected response from server' }; }
+            if (!res.ok || data.success === false) throw new Error(data.message || 'Request failed');
+            return data;
+        }
+
+        async function loadCandidates() {
+            try {
+                setStatus('Loading candidates...', true);
+                const data = await fetchJson('/api/admin/candidates?adminKey=' + encodeURIComponent(ADMIN_KEY));
+                const rows = document.getElementById('candidate-rows');
+                const list = Array.isArray(data.candidates) ? data.candidates : [];
+                rows.innerHTML = list.map(c => `
+                    <tr>
+                        <td>${c.id}</td>
+                        <td class="symbol">${c.symbol || '-'}</td>
+                        <td>${c.name || '-'}</td>
+                        <td>${c.department || '-'}</td>
+                        <td>${c.symbolName || '-'}</td>
+                        <td>${c.color || '-'}</td>
+                        <td><button class="btn btn-danger" onclick="deleteCandidate(${c.id}, '${(c.name || '').replace(/'/g, "\\'")}')">Delete</button></td>
+                    </tr>
+                `).join('');
+                if (!list.length) rows.innerHTML = '<tr><td colspan="7" class="muted">No candidates found</td></tr>';
+                setStatus('Candidates loaded', true);
+            } catch (error) {
+                setStatus(error.message, false);
+            }
+        }
+
+        async function addCandidate() {
+            const name = document.getElementById('name').value.trim();
+            const department = document.getElementById('department').value.trim();
+            const symbol = document.getElementById('symbol').value.trim();
+            const symbolName = document.getElementById('symbolName').value.trim();
+            const color = document.getElementById('color').value.trim() || '#2563eb';
+
+            if (!name || !department || !symbol || !symbolName) {
+                setStatus('Name, designation, symbol, and symbol name are required', false);
+                return;
+            }
+
+            try {
+                await fetchJson('/api/admin/candidates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ adminKey: ADMIN_KEY, name, department, symbol, symbolName, color })
+                });
+                document.getElementById('name').value = '';
+                document.getElementById('department').value = '';
+                document.getElementById('symbol').value = '';
+                document.getElementById('symbolName').value = '';
+                document.getElementById('color').value = '';
+                setStatus('Candidate added successfully', true);
+                await loadCandidates();
+            } catch (error) {
+                setStatus(error.message, false);
+            }
+        }
+
+        async function deleteCandidate(id, name) {
+            if (!confirm(`Delete candidate "${name}" (ID: ${id})?`)) return;
+            try {
+                await fetchJson('/api/admin/candidates/' + encodeURIComponent(id) + '?adminKey=' + encodeURIComponent(ADMIN_KEY), {
+                    method: 'DELETE'
+                });
+                setStatus('Candidate deleted successfully', true);
+                await loadCandidates();
+            } catch (error) {
+                setStatus(error.message, false);
+            }
+        }
+
+        loadCandidates();
+    </script>
 </body>
 </html>

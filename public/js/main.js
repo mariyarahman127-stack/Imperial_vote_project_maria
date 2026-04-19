@@ -23,6 +23,12 @@ const AppState = {
     isAuthenticated: false,
 };
 
+// Load centralized config first
+if (typeof window.ELECTION_CONFIG === 'undefined') {
+    // Fallback if config not loaded - will use default
+    console.warn('election-config.js not loaded - using defaults');
+}
+
 // Imperial College of Engineering - Voting System Data
 const sampleData = {
     users: [
@@ -33,22 +39,16 @@ const sampleData = {
     elections: [
         {
             id: 1,
-            title: 'Imperial College of Engineering - President Election 2026',
+            title: window.ELECTION_CONFIG ? window.ELECTION_CONFIG.title : 'Imperial College of Engineering - President Election 2026',
             description: 'Vote for your College President. Each student gets ONE vote only!',
             startDate: '2026-01-01T09:00',
             endDate: '2026-12-31T18:00',
             status: 'active',
-            showResultsToPublic: false, // Results only shown to admin
-            candidates: [
-                { id: 1, name: 'Swarna Roy (Lecturer, CSE Department)', symbol: '📖', votes: 0, position: 'President', color: '#e94560' },
-                { id: 2, name: 'Sumaiya Akter (Lecturer, CSE Department)', symbol: '🌹', votes: 0, position: 'President', color: '#4361ee' },
-                { id: 3, name: 'Sohely Sajlin (Lecturer, CSE Department)', symbol: '✈️', votes: 0, position: 'President', color: '#00d9a5' },
-                { id: 4, name: 'Mazharul Islam (Lecturer, CSE Department)', symbol: '🥭', votes: 0, position: 'President', color: '#ffc107' },
-                { id: 5, name: 'Jahangir Polash (Lecturer, CSE Department)', symbol: '🦜', votes: 0, position: 'President', color: '#9c27b0' },
-            ],
-            totalVoters: 500,
-            hasCastingVote: true,
-            castingVoteAuthority: 3,
+            showResultsToPublic: window.ELECTION_CONFIG ? window.ELECTION_CONFIG.showResultsToPublic : false,
+            candidates: window.ELECTION_CONFIG ? window.ELECTION_CONFIG.candidates.map(c => ({...c, votes: 0})) : [],
+            totalVoters: window.ELECTION_CONFIG ? window.ELECTION_CONFIG.totalVoters : 500,
+            hasCastingVote: window.ELECTION_CONFIG ? window.ELECTION_CONFIG.hasCastingVote : true,
+            castingVoteAuthority: window.ELECTION_CONFIG ? window.ELECTION_CONFIG.castingVoteAuthority : 3,
         },
     ],
 };

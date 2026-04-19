@@ -11,6 +11,8 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <!-- Load centralized election config -->
+    <script src="js/election-config.js"></script>
     <style>
         /* =====================================================
            Modern Voting System - Clean Blue/White/Gray Theme
@@ -622,7 +624,7 @@
                     <div class="stat-icon users">
                         <i class="fas fa-users"></i>
                     </div>
-                    <div class="stat-number" data-count="1000">0</div>
+                    <div class="stat-number" data-count="2000">0</div>
                     <div class="stat-label">Eligible Voters</div>
                 </div>
                 
@@ -630,7 +632,7 @@
                     <div class="stat-icon candidates">
                         <i class="fas fa-user-tie"></i>
                     </div>
-                    <div class="stat-number" data-count="5">0</div>
+                    <div class="stat-number" id="candidate-count" data-count="6">0</div>
                     <div class="stat-label">Candidates</div>
                 </div>
                 
@@ -725,6 +727,22 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             fetchVotesCount();
+            
+            // Update candidate count from API (dynamic) - with cache busting
+            async function updateCandidateCount() {
+                try {
+                    const response = await fetch('/api/candidates?t=' + Date.now());
+                    const candidates = await response.json();
+                    const candidateCountEl = document.getElementById('candidate-count');
+                    if (candidateCountEl) {
+                        candidateCountEl.dataset.count = candidates.length;
+                        candidateCountEl.textContent = candidates.length;
+                    }
+                } catch(e) {
+                    console.log('Could not load candidates');
+                }
+            }
+            updateCandidateCount();
             
             // Skip votes-cast since it's handled separately
             const statNumbers = document.querySelectorAll('.stat-number[data-count]:not(#votes-cast)');

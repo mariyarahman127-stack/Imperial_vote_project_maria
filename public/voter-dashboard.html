@@ -582,7 +582,7 @@
                     <div class="stat-icon warning">
                         <i class="fas fa-user-tie"></i>
                     </div>
-                    <div class="stat-value">5</div>
+                    <div class="stat-value">6</div>
                     <div class="stat-label">Candidates</div>
                 </div>
 
@@ -608,18 +608,22 @@
         </main>
     </div>
 
+    <script src="js/election-config.js"></script>
     <script>
+        // Load election data from centralized config
         const election = {
             id: 1,
-            title: 'President Election 2026',
-            candidates: [
-                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖' },
-                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹' },
-                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️' },
-                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭' },
-                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜' },
-            ]
+            title: window.getElectionInfo ? window.getElectionInfo().title : 'President Election 2026',
+            candidates: window.getCandidates ? window.getCandidates() : []
         };
+        
+        // Update candidate count text dynamically
+        function updateCandidateCount() {
+            const count = window.getCandidateCount ? window.getCandidateCount() : 6;
+            document.querySelectorAll('.candidate-count-display').forEach(el => {
+                el.textContent = count + ' candidates are running for President';
+            });
+        }
         
         async function checkServerVoteStatus(identifier) {
             try {
@@ -883,7 +887,7 @@
                                 <i class="fas fa-vote-yea"></i>
                             </div>
                             <h4>Vote for President</h4>
-                            <p>5 candidates are running for President</p>
+                            <p class="candidate-count-display">${window.getCandidateCount ? window.getCandidateCount() : 6} candidates are running for President</p>
                             <div class="action-buttons">
                                 <a href="vote.html?id=1" class="btn-primary">
                                     <i class="fas fa-vote-yea"></i>
@@ -909,7 +913,7 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             // Update total voters from config
-            const totalVoters = window.UNIVOTE_CONFIG?.TOTAL_VOTERS || 1000;
+            const totalVoters = window.UNIVOTE_CONFIG?.TOTAL_VOTERS || 2000;
             const totalVotersEl = document.getElementById('total-voters-display');
             if (totalVotersEl) {
                 totalVotersEl.textContent = totalVoters;

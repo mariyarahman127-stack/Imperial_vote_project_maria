@@ -11,6 +11,8 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <!-- Load centralized election config -->
+    <script src="js/election-config.js"></script>
     
     <style>
         :root {
@@ -439,7 +441,19 @@
                     sorted.forEach((c, i) => {
                         const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
                         const rankClass = i === 0 ? 'first' : '';
-                        html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i+1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + '<span class="result-symbol-name">' + c.symbolName + '</span></div><div class="result-dept">' + c.department + '</div><div class="result-progress"><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
+                        // Get department from candidate object or extract from name
+                        let dept = '';
+                        if (c.department && c.department.trim()) {
+                            dept = c.department;
+                        } else if (c.name && c.name.includes('(') && c.name.includes(')')) {
+                            dept = c.name.split('(')[1].replace(')', '');
+                        } else if (c.department) {
+                            dept = c.department;
+                        } else {
+                            dept = 'N/A';
+                        }
+                        const symbolName = c.symbolName || c.symbol;
+                        html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i+1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + '<span class="result-symbol-name">' + symbolName + '</span></div><div class="result-dept">' + dept + '</div><div class="result-progress"><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
                     });
                 }
             }

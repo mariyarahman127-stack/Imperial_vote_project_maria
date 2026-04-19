@@ -11,6 +11,7 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>
+    <script src="js/election-config.js"></script>
     <meta property="og:title" content="Vote Now - Imperial College of Engineering President Election 2026">
     <meta property="og:description" content="Cast your vote for the College President Election. Every vote counts!">
     <meta property="og:image" content="https://img.icons8.com/color/96/000000/ballot-box--v1.png">
@@ -275,7 +276,7 @@
                     <div style="font-size: 3rem; margin-bottom: 1rem;">🗳️</div>
                     <h2>Vote for Your President</h2>
                     <p style="margin-bottom: 1.5rem;">
-                        5 candidates are running for President.<br>Cast your vote now!
+                        <span id="candidate-count">6</span> candidates are running for President.<br>Cast your vote now!
                     </p>
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <a href="login.html" class="btn btn-primary">
@@ -294,7 +295,7 @@
                         <div class="stat-value">500</div>
                         <div class="stat-label">Voters</div>
                     <div class="stat-card">
-                        <div class="stat-value success">5</div>
+                        <div class="stat-value success" id="candidate-stat">6</div>
                         <div class="stat-label">Candidates</div>
                     <div class="stat-card">
                         <div class="stat-value warning">Active</div>
@@ -340,6 +341,7 @@
         </p>
     </div>
 
+    <script src="js/election-config.js"></script>
     <script>
         const serverUrl = window.location.origin;
         const voteLink = serverUrl + '/vote-link';
@@ -347,6 +349,13 @@
         function updateShareLinks() {
             const encoded = encodeURIComponent(voteLink);
             document.getElementById('share-url').textContent = voteLink;
+            
+            // Update candidate count dynamically
+            if (window.getCandidateCount) {
+                const count = window.getCandidateCount();
+                document.getElementById('candidate-count').textContent = count;
+                document.getElementById('candidate-stat').textContent = count;
+            }
             
             document.getElementById('facebook-btn').href = 
                 'https://www.facebook.com/sharer/sharer.php?u=' + encoded;

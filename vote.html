@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/election-config.js"></script>
     <script src="js/auth-service.js"></script>
     <script src="js/firebase-service.js"></script>
     <style>
@@ -237,13 +238,14 @@
     </div>
     
     <script>
-        // Candidates data - hardcoded for reliability
-        const candidates = [
+        // Candidates data - from centralized config
+        const candidates = window.getCandidates ? window.getCandidates() : [
             { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book' },
             { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose' },
             { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane' },
             { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango' },
-            { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' }
+            { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot' },
+            { id: 6, name: 'Marium Khanom', department: 'Student, CSE Department', symbol: '🦉', symbolName: 'Owl' }
         ];
         
         let selectedCandidate = null;

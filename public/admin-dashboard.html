@@ -13,6 +13,8 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <!-- Load centralized election config -->
+    <script src="js/election-config.js"></script>
     
     <style>
         :root {
@@ -411,6 +413,10 @@
                     <i class="fas fa-th-large"></i>
                     <span>Dashboard</span>
                 </a>
+                <a href="admin-candidates.html" class="nav-item">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Manage Candidates</span>
+                </a>
                 <a href="results.html" class="nav-item">
                     <i class="fas fa-chart-bar"></i>
                     <span>Results</span>
@@ -450,7 +456,7 @@
                     <div class="stat-label">Voter Turnout</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="candidates">5</div>
+                    <div class="stat-value" id="candidates">6</div>
                     <div class="stat-label">Candidates</div>
                 </div>
             </div>
@@ -518,6 +524,7 @@
                                     <th>Email</th>
                                     <th>Department</th>
                                     <th>Registered At</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="registered-users-table"></tbody>
@@ -641,14 +648,26 @@
         }
 
         // Calculate results from votes
-        function calculateResults(votes) {
-            const candidates = [
-                { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book', votes: 0 },
-                { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose', votes: 0 },
-                { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane', votes: 0 },
-                { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango', votes: 0 },
-                { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot', votes: 0 }
-            ];
+        async function calculateResults(votes) {
+            // Load candidates from API to get fresh data with department
+            let candidates = [];
+            try {
+                const response = await fetch('/api/candidates?t=' + Date.now());
+                candidates = await response.json();
+            } catch(e) {
+                // Fallback
+                candidates = window.getCandidates ? window.getCandidates() : [
+                    { id: 1, name: 'Swarna Roy', department: 'Lecturer, CSE Department', symbol: '📖', symbolName: 'Book', votes: 0 },
+                    { id: 2, name: 'Sumaiya Akter', department: 'Lecturer, CSE Department', symbol: '🌹', symbolName: 'Rose', votes: 0 },
+                    { id: 3, name: 'Sohely Sajlin', department: 'Lecturer, CSE Department', symbol: '✈️', symbolName: 'Airplane', votes: 0 },
+                    { id: 4, name: 'Mazharul Islam', department: 'Lecturer, CSE Department', symbol: '🥭', symbolName: 'Mango', votes: 0 },
+                    { id: 5, name: 'Jahangir Polash', department: 'Lecturer, CSE Department', symbol: '🦜', symbolName: 'Parrot', votes: 0 },
+                    { id: 6, name: 'Marium Khanom', department: 'Student, CSE Department', symbol: '🦉', symbolName: 'Owl', votes: 0 }
+                ];
+            }
+            
+            // Ensure votes: 0 for all candidates
+            candidates = candidates.map(c => ({...c, votes: 0}));
             
             votes.forEach(v => {
                 const candidate = candidates.find(c => c.id === v.candidateId);
@@ -788,16 +807,16 @@
             }
         }
 
-        function updateDashboard() {
+        async function updateDashboard() {
             // Calculate results from votes
             if (allVotes.length > 0) {
-                resultsData = calculateResults(allVotes);
+                resultsData = await calculateResults(allVotes);
             } else {
                 // Fallback to localStorage
                 const localVotes = localStorage.getItem('votes');
                 if (localVotes) {
                     const votes = JSON.parse(localVotes);
-                    resultsData = calculateResults(votes);
+                    resultsData = await calculateResults(votes);
                 }
             }
             
@@ -806,6 +825,8 @@
 
             document.getElementById('votes-cast').textContent = totalVotes;
             document.getElementById('turnout').textContent = totalVoters > 0 ? Math.round((totalVotes / totalVoters) * 100) + '%' : '0%';
+            // Update candidate count dynamically
+            document.getElementById('candidates').textContent = sorted.length;
 
             let html = '';
             if (sorted.length === 0) {
@@ -814,7 +835,19 @@
                 sorted.forEach((c, i) => {
                     const pct = totalVotes > 0 ? Math.round((c.votes / totalVotes) * 100) : 0;
                     const rankClass = i === 0 ? 'first' : '';
-                    html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i + 1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + ' <span class="result-symbol-name">(' + c.symbolName + ')</span></div><div class="result-dept">' + c.department + '</div><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
+                    // Direct department handling - try all possible fields
+                    let dept = c.department || '';
+                    // If dept is still empty, check if name format includes department
+                    if ((!dept || dept.trim() === '') && c.name && c.name.indexOf('(') > 0 && c.name.indexOf(')') > 0) {
+                        dept = c.name.substring(c.name.indexOf('(') + 1, c.name.indexOf(')'));
+                    }
+                    // If still empty, set default
+                    if (!dept || dept.trim() === '') {
+                        dept = 'N/A';
+                    }
+                    // Symbol name
+                    const symName = c.symbolName || c.symbol || '-';
+                    html += '<div class="result-item"><div class="result-rank ' + rankClass + '">' + (i + 1) + '</div><div class="result-symbol">' + c.symbol + '</div><div class="result-info"><div class="result-name">' + c.name + ' <span class="result-symbol-name">(' + symName + ')</span></div><div class="result-dept">' + dept + '</div><div class="progress-bar"><div class="progress-fill" style="width: ' + pct + '%"></div></div></div><div class="result-stats"><div class="result-votes">' + c.votes + ' votes</div><div class="result-percentage">' + pct + '%</div></div></div>';
                 });
             }
             document.getElementById('results-container').innerHTML = html;
@@ -846,7 +879,7 @@
             }
             
             const maxVotes = Math.max(...data.candidates.map(c => c.votes));
-            const colors = ['#667eea', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            const colors = ['#667eea', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
             
             let chartHtml = '';
             let legendHtml = '';
@@ -882,7 +915,7 @@
 
         async function renderResults() {
             await loadResults();
-            updateDashboard();
+            await updateDashboard();
         }
 
         async function clearAllVotes() {
@@ -1055,20 +1088,20 @@
 
         async function loadRegisteredUsers() {
             const tbody = document.getElementById('registered-users-table');
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Loading...</td></tr>';
             
             try {
                 const response = await fetch('/api/debug/users');
                 const users = await response.json();
                 
                 if (!users || Object.keys(users).length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No registered users</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No registered users</td></tr>';
                     return;
                 }
                 
                 let html = '';
                 let index = 1;
-                for (const [studentId, user] of Object.entries(users)) {
+                for (const [studentIdKey, user] of Object.entries(users)) {
                     const photoHtml = user.photo && user.photo.startsWith('data:') 
                         ? `<img src="${user.photo}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;">` 
                         : '<span style="color:#999;">No Photo</span>';
@@ -1076,22 +1109,65 @@
                     const registeredDate = user.registeredAt 
                         ? new Date(user.registeredAt).toLocaleDateString() + ' ' + new Date(user.registeredAt).toLocaleTimeString()
                         : '-';
+
+                    const studentId = user.studentId || studentIdKey;
+                    const email = user.email || '';
+                    const safeName = (user.name || 'this user').replace(/'/g, "\\'");
+                    const deleteBtn = `<button onclick="deleteRegisteredUser('${encodeURIComponent(studentId)}', '${encodeURIComponent(email)}', '${safeName}')" style="background:#ef4444;color:white;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>`;
                     
                     html += `<tr>
                         <td>${index}</td>
                         <td>${photoHtml}</td>
                         <td>${user.name || '-'}</td>
-                        <td>${user.studentId || studentId}</td>
+                        <td>${studentId}</td>
                         <td>${user.email || '-'}</td>
                         <td>${user.department || '-'}</td>
                         <td>${registeredDate}</td>
+                        <td>${deleteBtn}</td>
                     </tr>`;
                     index++;
                 }
                 tbody.innerHTML = html;
             } catch (error) {
                 console.error('Error loading users:', error);
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:red;">Error loading users</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:red;">Error loading users</td></tr>';
+            }
+        }
+
+        async function deleteRegisteredUser(studentIdEncoded, emailEncoded, userName) {
+            const studentId = decodeURIComponent(studentIdEncoded || '');
+            const email = decodeURIComponent(emailEncoded || '');
+            const identity = studentId ? `Student ID ${studentId}` : (email || 'this user');
+
+            const confirmed = confirm(`Delete registration for ${userName || 'this user'} (${identity})?\n\nThis will permanently remove the user from registeredUsers in Firebase.`);
+            if (!confirmed) return;
+
+            try {
+                const url = `/api/admin/registered-user/${encodeURIComponent(studentId)}?adminKey=admin2026&email=${encodeURIComponent(email)}`;
+                const response = await fetch(url, { method: 'DELETE' });
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = responseText ? JSON.parse(responseText) : {};
+                } catch (parseError) {
+                    const looksLikeHtml = responseText && responseText.trim().startsWith('<!DOCTYPE');
+                    if (looksLikeHtml) {
+                        throw new Error('Delete API route was not found (HTML returned). Please restart the server and open the dashboard again.');
+                    }
+                    throw new Error('Unexpected non-JSON response from server while deleting user.');
+                }
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Failed to delete registered user');
+                }
+
+                alert('Registered user deleted from database successfully.');
+                await loadRegisteredUsers();
+            } catch (error) {
+                console.error('Delete registered user error:', error);
+                alert('Failed to delete user: ' + error.message);
             }
         }
 
